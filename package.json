@@ -1,0 +1,45 @@
+{
+  "name": "lotim-minicommerce",
+  "version": "1.0.0",
+  "description": "lotim vet mini ecommerce backend system",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seunexplicit/lotim-minicommerce.git"
+  },
+  "keywords": [
+    "ecommerce",
+    "veterinary",
+    "vet",
+    "animal",
+    "pet",
+    "drug",
+    "health",
+    "poultry"
+  ],
+  "author": "Olusanya Timothy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seunexplicit/lotim-minicommerce/issues"
+  },
+  "homepage": "https://github.com/seunexplicit/lotim-minicommerce#readme",
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/debug": "^4.1.7",
+    "@types/express": "^4.17.13",
+    "source-map-support": "^0.5.19",
+    "tsc-watch": "^4.4.0",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "debug": "^4.3.2",
+    "express": "^4.17.1",
+    "joi": "^17.4.2",
+    "mongoose": "^5.13.5",
+    "winston": "^3.3.3"
+  }
+}
