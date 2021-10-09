@@ -14,7 +14,7 @@ declare global {
      }
 }
 
-export const environment = {
+/*export const environment = {
      production: false
-}
+}*/
 export {}

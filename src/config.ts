@@ -1,10 +1,10 @@
 import { config as config_dotenv } from 'dotenv';
 import path, { resolve } from 'path';
 import * as winston from 'winston';
-import { environment } from './environment';
+/*import { environment } from './environment';
 
 
-environment.production ? process.env.NODE_ENV = 'production' : process.env.NODE_ENV = 'development';
+environment.production ? process.env.NODE_ENV = 'production' : process.env.NODE_ENV = 'development';*/
 console.log(process.env.NODE_ENV, path.resolve(__dirname, "../.env.development"));
 switch (process.env.NODE_ENV) {
      case 'production':
