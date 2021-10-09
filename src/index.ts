@@ -16,6 +16,7 @@ const clientUser: express.Application = express();
 const adminApp: express.Application = express();
 const mainAdminApp: express.Application = express();
 
+console.log(process.env.MONGOOSE_URL);
 const dbConnection = mongoose.connect(process.env.MONGOOSE_URL || '', { useFindAndModify: false });
 dbConnection.then(
      (success) => { console.log(`connected to database successfully ${success}`) },
