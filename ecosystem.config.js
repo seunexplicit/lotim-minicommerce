@@ -6,8 +6,11 @@ module.exports = {
           watch: true,
           interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',
-          env: {
+          env_development: {
                "NODE_ENV": "development"
+          },
+          env_production: {
+               "NODE_ENV": "production"
           }
      },
      {
@@ -20,7 +23,7 @@ module.exports = {
           env_production: {
                "NODE_ENV": "production"
           },
-          env: {
+          env_development: {
                "NODE_ENV": "development"
           }
      }
