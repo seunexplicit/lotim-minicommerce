@@ -6,7 +6,7 @@
      "scripts": {
           "test": "echo \"Error: no test specified\" && exit 1",
           "debug": "export DEBUG=* && npm run start",
-          "start": "pm2-runtime kill && pm2-runtime start ecosystem.config.js --watch src/**",
+          "start": "pm2-runtime kill && pm2-runtime start ecosystem.config.prod.js --watch src/**",
           "heroku-postbuild": "npm install pm2"
      },
   "repository": {
