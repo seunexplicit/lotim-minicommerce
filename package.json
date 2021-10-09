@@ -7,7 +7,7 @@
           "test": "echo \"Error: no test specified\" && exit 1",
           "debug": "export DEBUG=* && npm run start",
           "start": "pm2-runtime start ecosystem.config.js --env production --only production",
-          "start:dev": "pm2-runtime start ecosystem.config.js --env production--only development",
+          "start:dev": "pm2-runtime start ecosystem.config.js --env development --only development",
           "heroku-postbuild": "tsc && npm install pm2"
      },
   "repository": {

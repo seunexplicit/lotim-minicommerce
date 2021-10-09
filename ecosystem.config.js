@@ -18,7 +18,7 @@ module.exports = {
           /*interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',*/
           env: {
-               "NODE_ENV": "development"
+               "NODE_ENV": "production"
           }
      }
      ],
