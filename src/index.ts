@@ -44,15 +44,15 @@ routes.push(new ProductsRoute(clientProduct));
 const port = process.env.CLIENT_PORT;
 const adminPort = process.env.ADMIN_PORT;
 
-clientServer.listen(port, () => {
-     console.log("server listening to ->", port);
+clientServer.listen(process.env.PORT||port, () => {
+     console.log("server listening to ->", process.env.PORT ||port);
      routes.forEach((route) => {
           debugLog(`route configure for ${route.getName()}`)
      })
 });
 
-adminServer.listen(adminPort, () => {
-     console.log('admin server listening to port ->', adminPort);
+adminServer.listen(process.env.PORT ||adminPort, () => {
+     console.log('admin server listening to port ->', process.env.PORT ||adminPort);
      debugLog(`route configure for ${adminRoute.getName()}`)
 })
 
