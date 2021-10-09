@@ -10,7 +10,7 @@
           "start:dev": "pm2-runtime start ecosystem.config.js --env development --only development",
           "postinstall": "tsc",
           "deploy": "git add . && git commit -m Heroku && git push heroku main",
-          "heroku-postbuild": "node post-install.js && npm install pm2"
+          "heroku-postbuild": "npm install pm2"
      },
   "repository": {
     "type": "git",
