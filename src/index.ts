@@ -51,7 +51,7 @@ clientServer.listen(process.env.PORT||port, () => {
      })
 });
 
-adminServer.listen(process.env.PORT ||adminPort, () => {
+adminServer.listen(adminPort, () => {
      console.log('admin server listening to port ->', process.env.PORT ||adminPort);
      debugLog(`route configure for ${adminRoute.getName()}`)
 })
