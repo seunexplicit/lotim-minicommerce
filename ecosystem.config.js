@@ -17,7 +17,7 @@ module.exports = {
           watch: ['/dist'],
           /*interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',*/
-          env: {
+          env_production: {
                "NODE_ENV": "production"
           }
      }
