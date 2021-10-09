@@ -17,9 +17,9 @@ module.exports = {
     production : {
       user : 'SSH_USERNAME',
       host : 'SSH_HOSTMACHINE',
-      ref  : 'origin/master',
-      repo : 'GIT_REPOSITORY',
-      path : 'DESTINATION_PATH',
+      ref  : 'origin/main',
+            repo: 'https://github.com/seunexplicit',
+            path: '/lotim-minicommerce',
       'pre-deploy-local': '',
             'post-deploy': 'npm install && pm2 reload ecosystem.config.js --env production --ext ts,json',
       'pre-setup': ''
