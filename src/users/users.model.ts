@@ -1,4 +1,4 @@
-import { Schema, model, Document, Model, Query} from 'mongoose';
+import { Schema, model, Document, Model, Query, NativeError} from 'mongoose';
 
 interface SubUserDoc extends Document {
      user:string
@@ -120,7 +120,7 @@ OrdersSchema.pre("deleteOne", { query: true, document: false }, async function (
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -137,7 +137,7 @@ OrdersSchema.post("save", async function (doc, next){
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -165,7 +165,7 @@ UserActivitiesSchema.pre("deleteOne", { query: true, document: false }, async fu
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -178,7 +178,7 @@ UserActivitiesSchema.post("save", async function (doc, next) {
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -210,7 +210,7 @@ EnquirySchema.pre("deleteOne", { query: true, document: false }, async function 
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -223,7 +223,7 @@ EnquirySchema.post("save", async function (doc, next) {
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -263,7 +263,7 @@ AppointmentSchema.pre("deleteOne", { query: true, document: false }, async funct
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError?err:null);
      }
 })
 
@@ -276,7 +276,7 @@ AppointmentSchema.post("save", async function (doc, next) {
           next()
      }
      catch (err) {
-          next(err);
+          next(err instanceof NativeError ? err : null);
      }
 })
 

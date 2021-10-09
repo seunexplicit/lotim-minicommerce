@@ -8,7 +8,7 @@
           "debug": "export DEBUG=* && npm run start",
           "start": "pm2-runtime start ecosystem.config.js --env production --only production",
           "start:dev": "pm2-runtime start ecosystem.config.js --env production--only development",
-          "heroku-postbuild": "ts-node -r tsconfig-paths/register ./src/index.ts && npm install pm2"
+          "heroku-postbuild": "tsc && npm install pm2"
      },
   "repository": {
     "type": "git",
