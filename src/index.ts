@@ -33,6 +33,7 @@ const corsOption:any = {
      origin: process.env.WHITELIST_ORIGIN
 }
 clientApp.use(cors(corsOption));
+adminApp.use(cors(corsOption));
 //app.use(logger.log);
 clientApp.use('/user', clientUser);
 clientApp.use('/product', clientProduct);
