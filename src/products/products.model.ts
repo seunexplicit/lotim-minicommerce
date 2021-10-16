@@ -1,16 +1,30 @@
 
 import { Schema, model, Document, Model, Query } from 'mongoose';
 
-interface Variety {
+export interface PriceHistory {
+     price: number,
+     cost: number,
+     discount: number,
+     changedAt:Date
+}
+
+
+export interface Variety {
      cost: number,
      price: number,
      discount?: number,
-     totalPurchased?: number,
-     failedPurchased?: number,
+     completedOrder: number,
+     canceledOrder: number,
+     rejectedOrder: number,
      quantity: number,
      value?: string,
-     key?:string,
+     key?: string,
+     deficitQuantity: number,
+     totalPurchasedPrice:number,
+     outOfStock: boolean,
+     totalOrder:number,
      imageUrl?: string,
+     priceHistory: PriceHistory[]
 }
 
 interface Feature {
@@ -28,6 +42,7 @@ export interface IProducts {
      varieties: [Variety],
      imageUrl: [string],
      activated?: boolean,
+     totalQuantity:Number,
      outOfStock?: boolean,
 }
 
@@ -45,8 +60,21 @@ const ProductsSchema = new Schema<Products>({
           cost: Number,
           price: Number,
           discount: Number,
-          failedPurchased: Number,
+          totalPurchasedPrice:Number,
+          completedOrder: { type: Number, default: 0 },
+          canceledOrder: { type: Number, default: 0 },
+          rejectedOrder: { type: Number, default: 0 },
+          totalOrder: { type: Number, default: 0 },
+          priceHistory: [{
+               price: Number,
+               cost: Number,
+               discount: Number,
+               changedAt:Date
+          }],
+          totalQuantity: Number,
           quantity: Number,
+          deficitQuantity:Number,
+          outOfStock: { type: Boolean, default: false },
           key: String,
           value:String,
           imageUrl: String,
@@ -57,6 +85,8 @@ const ProductsSchema = new Schema<Products>({
           value: String,
           key:String,
      }]
+}, {
+     timestamps: true
 });
 
 export const ProductsModel: Model<Products> = model<Products>('products', ProductsSchema);

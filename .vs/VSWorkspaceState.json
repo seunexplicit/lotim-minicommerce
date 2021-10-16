@@ -1,12 +1,14 @@
 {
   "ExpandedNodes": [
     "",
+    "\\node_modules\\pm2",
+    "\\node_modules\\pm2\\lib",
+    "\\node_modules\\tsconfig-paths",
     "\\src",
-    "\\src\\admin",
+    "\\src\\lib",
     "\\src\\products",
-    "\\src\\public",
     "\\src\\users"
   ],
-  "SelectedNode": "\\src\\users\\users.service.ts",
+  "SelectedNode": "\\ecosystem.config.js",
   "PreviewInSolutionExplorer": false
 }

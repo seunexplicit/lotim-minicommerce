@@ -118,14 +118,14 @@ export default class UserValidator {
           const schema = joi.object({
                products: joi.array().items(
                     joi.object({
-                         _id: joi.string()
+                         id: joi.string()
                               .min(10)
                               .required()
                               .messages({
-                                   'string.base': `_id must be a string`,
-                                   'string.min': `invalid _id`,
-                                   'string.required': '_id is required',
-                                   'string.empty': '_id cannot be empty',
+                                   'string.base': `id must be a string`,
+                                   'string.min': `invalid id`,
+                                   'string.required': 'id is required',
+                                   'string.empty': 'id cannot be empty',
                               }),
                          quantity: joi.number()
                               .min(1)
@@ -143,7 +143,7 @@ export default class UserValidator {
                               })
                     })
                ),
-               hasPaid: joi.boolean()
+               paid: joi.boolean()
                     .required()
                     .messages({
                          'boolean.required':`hasPaid is required`
@@ -155,46 +155,11 @@ export default class UserValidator {
                          'string.min': `payment reference is invalid`,
                          'string.empty':`payment reference cannot be empty`
                     }),
-               amount: joi.number()
-                    .positive()
-                    .when('hasPaid', { is: true, then: joi.number().required() })
-                    .messages({
-                         'number.positive': `invalid amount`,
-                         'number.required':`amount is required`
-                    })
-               ,
-               name: joi.string()
-                    .min(3)
-                    .max(30)
-                    .required()
-                    .messages({
-                         'string.min': `minimum name value allowed {#limit}`,
-                         'string.max': `maximum name value allowed {#limit}`,
-                         'string.empty': `name cannot be empty`,
-                         'string.required': `name is required`
-                    }),
-               phoneNumber: joi.string()
-                    .pattern(/^\+?[0-9]+$/)
-                    .custom(phoneNumber, 'mobile number validator')
-                    .required()
-                    .messages({
-                         'string.base': `phone number must be a number`,
-                         'string.pattern': `not a valid phone number`,
-                         'string.empty': `phone number cannot be empty`,
-                         'string.required':`phone number is required`,
-                         'string.invalid': `not a valid phone number`,
-                    }),
-               email: joi.string()
-                    .custom(emailValidator, 'email validator')
-                    .messages({
-                         'string.base': `email must be a string`,
-                         'string.empty': `email cannot be empty`,
-                         'string.invalid': `not a valid email`,
-                    }),
                delivery: joi.boolean()
                     .required()
                     .messages({
-                         'boolean.required': `hasPaid is required`
+                         'boolean.required': `hasPaid is required`,
+                         'boolean.base':`delivery cannot be empty`,
                     }),
                deliveryAddress: joi.string()
                     .when('delivery', { is: true, then: joi.string().required() })

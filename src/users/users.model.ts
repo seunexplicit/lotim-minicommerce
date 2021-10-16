@@ -1,7 +1,7 @@
-import { Schema, model, Document, Model, Query, NativeError} from 'mongoose';
+import { Schema, model, Document, Model, Query, NativeError } from 'mongoose';
 
 interface SubUserDoc extends Document {
-     user:string
+     user: string
 }
 const deleteOneCallback = async function <T extends SubUserDoc>(self: Query<any, T>, props: 'orders' | 'activities' | 'enquiries' | 'appointments') {
      try {
@@ -18,7 +18,7 @@ const deleteOneCallback = async function <T extends SubUserDoc>(self: Query<any,
 
 export interface UserLogin {
      email: string,
-     password:string,
+     password: string,
 }
 
 export interface Users {
@@ -27,81 +27,89 @@ export interface Users {
      phoneNumber?: string,
 }
 
-interface OrderProduct {
+export interface OrderProduct {
      quantity: number,
-     product:string,
+     product: string,
+     price: number,
+     cost: number,
+     discount: number | null | undefined,
+     variety: string
 }
 
-interface Payment extends Document{
+export interface Payment extends Document {
      status: boolean,
      data: {
-          status: string,
           reference: string,
           amount: number,
-          paid_at: Date,
           channel: string,
-          authorization: {
-               last4: string,
-               channel: string,
-               card_type: string,
-          },
-     },
-     orderId:string,
+          paid_at: Date,
+          fees: number,
+          customer: {
+               first_name: string,
+               last_name: string,
+               email: string,
+               phone: string,
+          }
+     }
+     productId: string,
+     paymentFor: "consultation"|"product"|"service"
 }
 
 const PaymentSchema = new Schema<Payment>({
      status: Boolean,
      data: {
-          status: String,
           reference: String,
           amount: Number,
-          paid_at: Date,
           channel: String,
-          authorization: {
-               last4: String,
-               channel: String,
-               card_type: String,
-          },
+          paid_at: Date,
+          fees: Number,
+          customer: {
+               first_name: String,
+               last_name: String,
+               email: String,
+               phone: String,
+          }
      },
-     orderId: String,
+     productId: String,
+     paymentFor: { type: String, enum: ["consultation", "product", "service"] }
+}, {
+     timestamps: true
 })
 
-const PaymentModel = model<Payment>("Payment", PaymentSchema);
+export const PaymentModel = model<Payment>("Payment", PaymentSchema);
 
-interface IOrder {
-     deliveryMeans: 'pickup' | 'delivery',
+export interface IOrder {
+     delivery: boolean,
      deliveryAddress: string,
      paid: boolean,
-     paymentReference: string,
-     orders: [
-          OrderProduct
-     ]
+     paymentReference?: string,
+     orders: OrderProduct[],
+     totalPurchasedPrice: number,
+     fraudulent: boolean,
+     status: 'open' | 'delivery' | 'closed' | 'rejected' | 'cancel',
+     user: string,
+     payment: string
 }
 
-interface Orders extends IOrder, Document {
+export interface Orders extends IOrder, Document {
      remarks: string,
-     purchasedDate: Date,
-     rejectedDate: Date,
-     closedDate: Date,
-     totalPurchasedPrice: number,
-     receivedDate: Date,
-     status: 'open' | 'delivery' | 'closed' | 'completed' | 'cancel',
-     user: string,
-     payment:string
+     closedAt: Date,
+     receivedAt: Date,
+     deliveryCommencedAt: Date,
 }
 
 const OrdersSchema = new Schema<Orders>({
      payment: { type: Schema.Types.ObjectId, ref: 'Payment' },
      remarks: String,
-     purchasedDate: Date,
-     rejectedDate: Date,
-     closedDate: Date,
+     closedAt: Date,
+     deliveryCommencedAt: Date,
      totalPurchasedPrice: Number,
-     deliveryMeans: { type: String, enum: ['pickup', 'delivery'] },
+     delivery: Boolean,
      deliveryAddress: String,
-     receivedDate: Date,
+     receivedAt: Date,
+     fraudulent: { type: Boolean, select: false },
      paymentRefernce: String,
-     paid:Boolean,
+     paid: Boolean,
      status: {
           type: String, enum: ['open', 'delivery', 'closed', 'completed', 'cancelled']
      },
@@ -109,9 +117,15 @@ const OrdersSchema = new Schema<Orders>({
      orders: [
           {
                quantity: Number,
-               product: { type: Schema.Types.ObjectId, ref:'Products' }
+               product: { type: Schema.Types.ObjectId, ref: 'products' },
+               variety: String,
+               price: Number,
+               cost: Number,
+               discount: Number
           }
      ]
+}, {
+     timestamps: true
 });
 
 OrdersSchema.pre("deleteOne", { query: true, document: false }, async function (this: Query<any, Orders>, next) {
@@ -124,14 +138,17 @@ OrdersSchema.pre("deleteOne", { query: true, document: false }, async function (
      }
 })
 
-OrdersSchema.post("save", async function (doc, next){
+OrdersSchema.post("save", async function (doc, next) {
      try {
           const [users, payment] = await Promise.all([
                UsersModel.findOne({ _id: this.user }),
-               PaymentModel.findOne({ 'data.reference': this.paymentReference })
+               PaymentModel.findOne({ 'data.reference': this.payment })
           ]);
           users?.orders?.push(this._id);
-          if (payment) payment.orderId = this._id;
+          if (payment) {
+               payment.productId = this._id;
+               payment.paymentFor = "product";
+          }
           await users?.save();
           await payment?.save();
           next()
@@ -154,9 +171,11 @@ interface UserActivities extends Document {
 const UserActivitiesSchema = new Schema<UserActivities>({
      date: Date,
      action: String,
-     products: { type: Schema.Types.ObjectId, ref: 'Products' },
+     products: { type: Schema.Types.ObjectId, ref: 'products' },
      url: String,
      user: { type: Schema.Types.ObjectId, ref: 'Users' }
+}, {
+     timestamps: true
 })
 
 UserActivitiesSchema.pre("deleteOne", { query: true, document: false }, async function (this: Query<any, UserActivities>, next) {
@@ -186,7 +205,7 @@ export const UserActivitiesModel = model<UserActivities>('UserActivities', UserA
 
 interface Enquiries extends Document {
      enquiry: string,
-     response:string,
+     response: string,
      date: Date,
      attendedDate?: Date,
      remarks?: string,
@@ -199,9 +218,11 @@ const EnquirySchema = new Schema<Enquiries>({
      date: { type: Date, default: new Date() },
      attendedDate: Date,
      remarks: String,
-     response:String,
+     response: String,
      status: { type: String, enum: ['open', 'closed', 'terminated'] },
      user: { type: Schema.Types.ObjectId, ref: 'Users' }
+}, {
+     timestamps: true
 });
 
 EnquirySchema.pre("deleteOne", { query: true, document: false }, async function (this: Query<any, Enquiries>, next) {
@@ -236,25 +257,27 @@ interface Appointment {
      bookingsDate: Date,
 }
 
-export interface IModelAppointment extends Appointment, Users{ } 
+export interface IModelAppointment extends Appointment, Users { }
 
 interface IAppointment extends Appointment, Document {
      status: 'open' | 'closed' | 'terminated',
      remarks?: string,
      user: string,
-     closeDate:Date
+     closeDate: Date
 }
 
 const AppointmentSchema: Schema<IAppointment> = new Schema({
-     reason: { type:String, required:true},
+     reason: { type: String, required: true },
      description: String,
      status: {
-          type: String, enum: ['open', 'closed', 'terminated']
+          type: String, enum: ['open', 'closed', 'terminated'], default:'open'
      },
-     closedDate:Date,
+     closedDate: Date,
      bookingsDate: Date,
      remarks: String,
-     user: { type: Schema.Types.ObjectId, ref:'Users' }
+     user: { type: Schema.Types.ObjectId, ref: 'Users' }
+}, {
+     timestamps: true
 })
 
 AppointmentSchema.pre("deleteOne", { query: true, document: false }, async function (this: Query<any, IAppointment>, next) {
@@ -263,7 +286,7 @@ AppointmentSchema.pre("deleteOne", { query: true, document: false }, async funct
           next()
      }
      catch (err) {
-          next(err instanceof NativeError?err:null);
+          next(err instanceof NativeError ? err : null);
      }
 })
 
@@ -287,11 +310,11 @@ export interface ICreateUser extends Users {
      password?: string,
 }
 
-export interface IUsers extends ICreateUser, Document{
+export interface IUsers extends ICreateUser, Document {
      address?: string,
      enquiries?: Array<string>,
-     orders?:Array<string>,
-     activities?:Array<string>,
+     orders?: Array<string>,
+     activities?: Array<string>,
      lastActionDate: Date,
      appointments?: Array<string>,
 }
@@ -304,11 +327,13 @@ const Users = new Schema<IUsers>({
      password: { type: String, select: false },
      phoneNumber: String,
      address: String,
-     enquiries: [{ type: Schema.Types.ObjectId, ref: 'enquries' }],
+     enquiries: [{ type: Schema.Types.ObjectId, ref: 'Enquiries' }],
      activities: [{ type: Schema.Types.ObjectId, ref: 'UserActivities' }],
      orders: [{ type: Schema.Types.ObjectId, ref: 'Orders' }],
      lastActionDate: { type: Date, default: new Date() },
      appointments: [{ type: Schema.Types.ObjectId, ref: 'Appointments' }]
+}, {
+     timestamps: true
 });
 
 export const UsersModel: Model<IUsers> = model('Users', Users);

@@ -3,9 +3,6 @@ import path, { resolve } from 'path';
 import * as winston from 'winston';
 import   './environment';
 
-
-/*environment.production ? process.env.NODE_ENV = 'production' : process.env.NODE_ENV = 'development';*/
-console.log(process.env.NODE_ENV, path.resolve(__dirname, "../.env.development"));
 switch (process.env.NODE_ENV) {
      case 'production':
           config_dotenv({

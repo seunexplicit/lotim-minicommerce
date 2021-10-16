@@ -5,16 +5,17 @@ import { CommonRoute } from '../common/common.route';
 import { AdminMiddleware } from './admin.middleware';
 import { AdminService } from './admin.service';
 import { ProductService } from '../products/product.service';
+import { UserService } from '../users/users.service';
 
 export class AdminRoute extends CommonRoute {
      private schema: Schema;
      private service: AdminService;
-     private product: ProductService
+     private product: ProductService;
+     private user: UserService = new UserService();
 
      constructor(
           public app: express.Application,
           middleware: CommonMiddleware = new AdminMiddleware() 
-          
      ) {
           super(app, "AdminRoute", middleware);
           this.fileOpts = { fileSize: Number(process.env.ADMIN_FILE_SIZE), filesCount: Number(process.env.ADMIN_FILE_COUNT || 0) };
@@ -27,7 +28,8 @@ export class AdminRoute extends CommonRoute {
 
      configureRoutes() {
           this.service = new AdminService();
-          this.product = new ProductService()
+          this.product = new ProductService();
+          this.user = new UserService();
           this.schema = new Schema();
           this.app.post('/login',
                this.middleware.authorized,
@@ -42,7 +44,7 @@ export class AdminRoute extends CommonRoute {
                     this.middleware.authenticate,
                     this.product.getOneProduct
                )
-               .get('/products',
+               .get('/product',
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.product.getProducts
@@ -63,41 +65,42 @@ export class AdminRoute extends CommonRoute {
                     this.schema.productValidator,
                     this.service.createNewProducts
                )
-               .get('/order/:id',
+               .get('/order/:orderId',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
-               .get('/orders',
+                    this.service.getOneOrder)
+               .get('/order',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getOrders)
                .delete('/order/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    () => { })
                .patch('/order/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getOneOrder)
+               .get('/user/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.getOneUser)
+               .get('/user',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.getUsers)
                .get('/booking/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getAppointment)
                .get('/bookings',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getAppointments)
                .delete('/booking/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getAppointment)
                .patch('/booking/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
@@ -106,13 +109,11 @@ export class AdminRoute extends CommonRoute {
                .get('/enquiry/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getEnquiry)
                .get('/enquiries',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getEnquiries)
                .delete('/enquiry/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,

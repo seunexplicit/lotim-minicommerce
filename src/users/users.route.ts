@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import Schema from './users.schema';
 import { CommonMiddleware } from '../common/common.middleware';
 import { CommonRoute } from '../common/common.route';
@@ -14,8 +14,9 @@ export class UsersRoute extends CommonRoute {
      ) {
           super(app, 'UsersRoute', middleware);
           this.schema = new Schema();
-          //this.uploadFiles();
-          //this.getFiles();
+          this.fileOpts = { fileSize: Number(process.env.CLIENT_FILE_SIZE), filesCount: Number(process.env.CLIENT_FILE_COUNT || 0) };
+          this.uploadFiles();
+          this.getFiles((req: Request, res: Response, next: NextFunction) => next());
      }
 
      configureRoutes() {
@@ -29,6 +30,10 @@ export class UsersRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.service.getEnquiries)
+               .get('/enquiry/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.getEnquiry)
                .post('/booking',
                     this.middleware.authorized,
                     this.schema.bookingsValidator,
@@ -48,21 +53,17 @@ export class UsersRoute extends CommonRoute {
                     })
                .get('/orders',
                     this.middleware.authorized,
-                    this.schema.orderValidator,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getOrders)
                .post('/order',
                     this.middleware.authorized,
-                    this.schema.orderValidator,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.schema.orderValidator,
+                    this.service.postOrders)
                .get('/order/:orderId',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.getOneOrders)
                .post('/create',
                     this.middleware.authorized,
                     this.schema.userValidator,

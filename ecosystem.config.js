@@ -3,7 +3,8 @@ module.exports = {
           name: "development",
           script: "src/index.ts",
           /*script:"./node_modules/.bin/ts-node -r ./node_modules/tsconfig-paths/register src/index.ts",*/
-          watch: true,
+          watch: ['src'],
+          ignore_watch: ['src/public'],
           interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',
           env_development: {
@@ -17,7 +18,8 @@ module.exports = {
           name: "production",
           script: "dist/index.js",
           /*script:"./node_modules/.bin/ts-node -r ./node_modules/tsconfig-paths/register src/index.ts",*/
-          watch: ['/dist'],
+          watch: ['dist'],
+          ignore_watch:['dist/public'],
           /*interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',*/
           env_production: {

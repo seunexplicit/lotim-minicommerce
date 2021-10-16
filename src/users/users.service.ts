@@ -1,8 +1,24 @@
-import { UsersModel, Users, AppointmentModel, OrdersModel, IUsers, ICreateUser, UserLogin, EnquiryModel, } from './users.model';
+import {
+     UsersModel,
+     Users,
+     AppointmentModel,
+     OrdersModel,
+     PaymentModel,
+     Payment,
+     OrderProduct,
+     Orders,
+     IOrder,
+     IUsers,
+     ICreateUser,
+     UserLogin,
+     EnquiryModel,
+} from './users.model';
 import Hash from '../lib/hash_password';
 import LoginEncryption from '../lib/login';
 import { NextFunction, Request, Response } from 'express';
 import { MailService } from '../common/common.service';
+import { VerifyPTransaction } from '../lib/paystack';
+import { ProductsModel } from '../products/products.model';
 
 export class UserService {
 
@@ -76,19 +92,119 @@ export class UserService {
           }
      }
 
+     async postOrders(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { body, credentialId } = req;
+               let pResponse: any;
+               let paymentSchema: Payment | undefined = undefined;
+               if (body.paid) {
+                    pResponse = await VerifyPTransaction(body.paymentReference);
+                    if (!pResponse?.status) return res.status(400).send({ status: false, message: "payment cannot be verified" });
+                    const paymentData = {
+                         status: pResponse?.status,
+                         data: {
+                              reference: pResponse?.data?.reference,
+                              amount: pResponse?.data?.amount,
+                              channel: pResponse?.data?.channel,
+                              paid_at: pResponse?.data?.paid_at,
+                              fees: pResponse?.data?.fees,
+                              customer: {
+                                   first_name: pResponse?.data?.customer?.first_name,
+                                   last_name: pResponse?.data?.customer?.last_name,
+                                   email: pResponse?.data?.customer?.email,
+                                   phone: pResponse?.data?.customer?.phone,
+                              }
+                         }
+                    }
+
+                    paymentSchema = await new PaymentModel(paymentData);
+                    await paymentSchema.save();
+               }
+               const products = await ProductsModel.find({
+                    _id: {
+                         $in: [...(body.products.map((value: any) => value.id))]
+                    }
+               });
+
+               let eachProducts: OrderProduct[] = [];
+               let totalPrice: number = 0;
+               let fraudulent = false;
+               (body.products as Array<any>).forEach((value, id) => {
+                    const product = products.find(each => each._id == value.id);
+                    const varietyIndex = product!.varieties.findIndex((each) => (each as any)._id == value.variation);
+                    const variety = product?.varieties[varietyIndex];
+                    const cost = variety!.discount ? Number(variety?.price) - (Number(variety?.discount) * Number(variety?.price)) : Number(variety?.price);           
+                    eachProducts.push({
+                         product: value.id,
+                         price: Number(cost * value?.quantity),
+                         discount: variety?.discount,
+                         quantity: value?.quantity!,
+                         cost: variety?.price!,
+                         variety: value.variation
+                    });
+                    product!.varieties[varietyIndex].totalOrder += value!.quantity;
+                    product!.varieties[varietyIndex].quantity -= value!.quantity
+                    console.log(product!.varieties[varietyIndex].quantity);
+                    if (product!.varieties[varietyIndex].quantity <= 0) {
+                         product!.varieties[varietyIndex].outOfStock = true;
+                         product!.varieties[varietyIndex].deficitQuantity += Math.abs(product!.varieties[varietyIndex].quantity)
+                         product!.varieties[varietyIndex].quantity = 0;
+                    }
+                    let remProductQty = 0;
+                    product!.varieties.forEach((_v) => { remProductQty += _v.quantity })
+                    if (remProductQty <= 0) product!.outOfStock = true;
+                    totalPrice += Number(cost * value?.quantity);
+                    product?.save();
+               });
+
+               console.log(eachProducts);
+
+               if (body.paid &&
+                    ((totalPrice + 1 < pResponse?.data?.amount) || (totalPrice - 1 > pResponse?.data?.amount))) {
+                    fraudulent = true;
+               }
+
+               let orderData: IOrder = {
+                    delivery: body.delivery,
+                    deliveryAddress: body.deliveryAddress,
+                    orders: eachProducts,
+                    paid: body.paid,
+                    paymentReference: body.paymentReference,
+                    fraudulent,
+                    totalPurchasedPrice: totalPrice,
+                    user: credentialId,
+                    status: 'open',
+                    payment: paymentSchema?._id,
+               };
+
+               const newOrder = new OrdersModel(orderData);
+               await newOrder.save();
+               fraudulent ?
+                    res.status(400).send({ status: false, message: `An issue with payment confirmation; please contact admin. issue code: ${newOrder._id}` }) :
+                    res.status(200).send({ status: true, message: "Order submitted successfully", data: newOrder });
+
+          }
+          catch (err) {
+               next(err);
+          }
+     }
 
      async getOrders(req: Request, res: Response, next: NextFunction) {
           try {
                const { credentialId, query } = req;
                const skip:number = query.skip ? Number(query.skip) : 0;
                const limit:number = query.limit ? Number(query.limit) : 20;
-               const [order, documentCounts] = await Promise.all([
+               const [order, total] = await Promise.all([
                     OrdersModel.find({ user: credentialId })
                          .skip(skip)
                          .limit(limit),
                     OrdersModel.countDocuments({ user: credentialId })
                ])
-               return res.status(200).send({ order, document: { documentCounts, limit, skip } });
+               return res.status(200).send({
+                    status: true,
+                    message: "success",
+                    data: { order: order, document: { total, limit, skip } }
+               });
           }
           catch (err) {
                next(err);
@@ -97,9 +213,12 @@ export class UserService {
 
      async getOneOrders(req: Request, res: Response, next: NextFunction) {
           try {
-               const { credentialId,  params } = req;
-               const order =  OrdersModel.findOne({_id:params.id, user: credentialId })
-               return res.status(200).send(order);
+               const { credentialId, params } = req;
+               console.log(credentialId, params)
+               const order = await OrdersModel
+                    .findOne({ _id: params.orderId, user: credentialId })
+                    .populate('orders.product')
+               return res.status(200).send({ status: true, message: "success", data: order });
           }
           catch (err) {
                next(err);
@@ -154,7 +273,7 @@ export class UserService {
      async getAppointment(req: Request, res: Response, next: NextFunction) {
           try {
                const { credentialId, params } = req;
-               const appointment = AppointmentModel.findOne({ _id: params.id, user: credentialId })
+               const appointment = await AppointmentModel.findOne({ _id: params.id, user: credentialId })
                return res.status(200).send({ status: true, message: "success", data: appointment });
           }
           catch (err) {
@@ -179,7 +298,7 @@ export class UserService {
                     user: user?._id,
                });
                await enquiry.save();
-               res.status(200).send({ status: true, message: "Enqury submitted successfully", data: enquiry })
+               res.status(200).send({ status: true, message: "Enquiry submitted successfully", data: enquiry })
           }
           catch (err) {
                console.log(err);
@@ -189,7 +308,7 @@ export class UserService {
 
      async getEnquiries(req: Request, res: Response, next: NextFunction) {
           try {
-               const { credentialEmail, credentialId, credentialPassword, query } = req;
+               const { credentialId, query } = req;
                const skip: number = query.skip ? Number(query.skip) : 0;
                const limit: number = query.limit ? Number(query.limit) : 20;
                const [enquiries, total] = await Promise.all([
@@ -205,17 +324,16 @@ export class UserService {
           }
      }
 
-     async getEnqury(req: Request, res: Response, next: NextFunction) {
+     async getEnquiry(req: Request, res: Response, next: NextFunction) {
           try {
                const { credentialId, params } = req;
-               const appointment = AppointmentModel.findOne({ _id: params.id, user: credentialId })
-               return res.status(200).send(appointment);
+               const enquiry = await EnquiryModel.findOne({ _id: params.id, user: credentialId })
+               return res.status(200).send({ status: true, message: "success", data: enquiry });
           }
           catch (err) {
                next(err);
           }
      }
-
 
      async findOne(req: Request, res: Response, next: NextFunction){
           try {

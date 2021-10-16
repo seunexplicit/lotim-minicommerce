@@ -5,6 +5,8 @@ import { RandomValue } from '../lib/utility.lib';
 import { MailService } from '../common/common.service';
 import { AdminModel } from './admin.model';
 import Login from '../lib/login';
+import { AppointmentModel, EnquiryModel, OrdersModel, UsersModel } from '../users/users.model';
+import { Mongoose, SchemaType, SchemaTypes, Types } from 'mongoose';
 
 export class AdminService {
 
@@ -78,76 +80,143 @@ export class AdminService {
           }
      }
 
-     /*async getProducts(req: Request, res: Response, next: NextFunction) {
+     async getOneOrder(req: Request, res: Response, next: NextFunction) {
           try {
-               const { params, query } = req;
+               const { params } = req;
+               const order = await OrdersModel
+                    .findOne({ _id: params.orderId })
+                    .populate([
+                         { path: 'orders.products' },
+                         { path: 'user' }
+                    ])
+               return res.status(200).send({ status: true, message: "success", data: order });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getOrders(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { query } = req;
+               const skip: number = query.skip ? Number(query.skip) : 0;
+               const limit: number = query.limit ? Number(query.limit) : 20;
+               const [orders, total] = await Promise.all([
+                    OrdersModel.find()
+                         .skip(skip)
+                         .limit(limit),
+                    OrdersModel.countDocuments()
+               ])
+
+               return res.status(200).send({ status: true, message: "success", data: { orders: orders, document: { total, limit, skip } }});
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getAppointment(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               const appointment = await AppointmentModel.findOne({ _id: params.id })
+                    .populate('user')
+               return res.status(200).send({ status: true, message: "success", data: appointment });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getAppointments(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { query } = req;
+               const skip: number = query.skip ? Number(query.skip) : 0;
+               const limit: number = query.limit ? Number(query.limit) : 20;
+               const queryData = (query.user + "").length == 24 ? (query.user as string) : undefined;
+               const [appointment, total] = await Promise.all(queryData ?
+                    [
+                         AppointmentModel.find({ user: queryData })
+                         .skip(skip)
+                         .limit(limit),
+                         AppointmentModel.countDocuments({ user: queryData })
+                    ] : [
+                         AppointmentModel.find()
+                              .skip(skip)
+                              .limit(limit),
+                         AppointmentModel.countDocuments()
+                    ])
+               return res.status(200).send({ status: true, message: "success", data: { appointment: appointment, document: { total, limit, skip } } });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getEnquiry(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               const enquiry = await EnquiryModel.findOne({ _id: params.id })
+                                        .populate('user')
+               return res.status(200).send({ status: true, message: "success", data: enquiry });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+     async getEnquiries(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { query } = req;
+               const skip: number = query.skip ? Number(query.skip) : 0;
+               const limit: number = query.limit ? Number(query.limit) : 20;
+               const queryData = (query.user + "").length == 24 ? (query.user as string) : undefined;
+               const [enquiries, total] = await Promise.all(queryData?[
+                    EnquiryModel.find({ user: queryData })
+                         .skip(skip)
+                         .limit(limit),
+                    EnquiryModel.countDocuments({ user: queryData })
+               ] : [
+                         EnquiryModel.find()
+                              .skip(skip)
+                              .limit(limit),
+                         EnquiryModel.countDocuments()
+                    ])
+               return res.status(200).send({ status: true, message: "success", data: { enquiries: enquiries, document: { total, limit, skip } } });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getUsers(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { query } = req;
                const limit: number = query.limit ? Number(query.limit) : 20;
                const skip: number = query.skip ? Number(query.skip) : 0;
-               const searchKey: string = query.search?query.search+'':'';
-               let category: any = query.category?query.category+'':'';
-               let animal: any = query.animal?query.animal+'':'';
-               let brand: any = query.brand?query.brand + '':'';
-               category = (category.split(",") as Array<string>).map(each => new RegExp(each));
-               animal = (animal.split(",") as Array<string>).map(each => new RegExp(each));
-               brand = (brand.split(",") as Array<string>).map(each => new RegExp(each));
-               const minPrice: number = query.minPrice ? Number(query.minPrice) : 0;
-               const maxPrice: number = query.maxPrice ? Number(query.maxPrice) : 1000000000;
+               const searchKey: string = query.search ? query.search + '' : '';
                let searchArray = ((searchKey.split(" ")).filter(each => each.length > 2)).map(each => new RegExp(each));
-               const [products, counts] = await Promise.all([
-                    ProductsModel.find({
-                         $and: [
-                              { category: { $in: [...category] } },
-                              { animal: { $in: [...animal] } },
-                              { brand: { $in: [...brand] } },
-                              {
-                                   varieties: {
-                                        $all: [
-                                             { $elemMatch: { price: { $gte: minPrice } } },
-                                             { $elemMatch: { price: { $lte: maxPrice } } }
-                                        ]
-                                   }
-                              },
-                              {
-                                   $or: [
-                                        { name: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { category: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { animal: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { description: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { brand: { $in: [new RegExp(searchKey), ...searchArray] }}
-                                   ]
-                              }
+               const [users, total] = await Promise.all([
+                    UsersModel.find({
+                         $or: [
+                              { firstName: { $in: [new RegExp(searchKey), ...searchArray] } },
+                              { lastName: { $in: [new RegExp(searchKey), ...searchArray] } },
+                              { email: { $in: [new RegExp(searchKey), ...searchArray] } },
+                              { phoneNumber: { $in: [new RegExp(searchKey), ...searchArray] } }
                          ]
                     })
                          .skip(skip)
                          .limit(limit),
-                    ProductsModel.countDocuments({
-                         $and: [
-                              { category: { $in: [...category] } },
-                              { animal: { $in: [...animal] } },
-                              { brand: { $in: [...brand] } },
-                              {
-                                   varieties: {
-                                        $all: [
-                                             { $elemMatch: { price: { $gte: minPrice } } },
-                                             { $elemMatch: { price: { $lte: maxPrice } } }
-                                        ]
-                                   }
-                              },
+                    UsersModel.countDocuments(
                               {
                                    $or: [
-                                        { name: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { category: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { animal: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { description: { $in: [new RegExp(searchKey), ...searchArray] } },
-                                        { brand: { $in: [new RegExp(searchKey), ...searchArray] } }
+                                        { firstName: { $in: [new RegExp(searchKey), ...searchArray] } },
+                                        { lastName: { $in: [new RegExp(searchKey), ...searchArray] } },
+                                        { email: { $in: [new RegExp(searchKey), ...searchArray] } },
+                                        { phoneNumber: { $in: [new RegExp(searchKey), ...searchArray] } }
                                    ]
-                              }
-                         ]
-                    })
-               ]);
+                              })])
 
                return res.status(200).send(
-                    { status: true, data: { products, document: { limit, skip, documentCount: counts } } }
+                    { status: true, message:"success", data: { users:users, document: { limit, skip, total } } }
                )
           }
           catch (err) {
@@ -155,16 +224,26 @@ export class AdminService {
           }
      }
 
-     async getOneProduct(req: Request, res: Response, next: NextFunction) {
+     async getOneUser(req: Request, res: Response, next: NextFunction) {
           try {
-               const { params, query } = req;
-               const product = await ProductsModel.findById(params.id)
+               const { params } = req;
+               const product = await UsersModel.findById(params.id)
+                    .populate([
+                         { path: 'enquiries', options: {limit:20}},
+                         { path: 'activities', options: { limit: 20 } },
+                         { path: 'orders', options: { limit: 20 } },
+                         { path: 'appointments', options: { limit: 20 } }
+                    ])
                return res.status(200).send(
-                    { status: true, data: product }
+                    { status: true, message:"success", data: product }
                )
           }
           catch (err) {
                next(err)
           }
-     }*/
+     }
+
+
+
+   
 }

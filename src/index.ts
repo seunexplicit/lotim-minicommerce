@@ -45,7 +45,7 @@ const port = process.env.CLIENT_PORT;
 const adminPort = process.env.ADMIN_PORT;
 
 clientServer.listen(port, () => {
-     console.log("server listening to ->", process.env.PORT ||port);
+     console.log("server listening to ->", port);
      routes.forEach((route) => {
           debugLog(`route configure for ${route.getName()}`)
      })
