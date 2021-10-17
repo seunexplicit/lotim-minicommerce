@@ -4,6 +4,9 @@ import { CommonMiddleware } from './common.middleware';
 import path from 'path';
 import { FileModel, File } from './common.model';
 import FileManipulation from '../lib/file.lib';
+import aws from 'aws-sdk';
+import multerS3 from 'multer-s3';
+import util from 'util';
 
 
 export abstract class CommonRoute {
@@ -11,6 +14,7 @@ export abstract class CommonRoute {
      app: express.Application;
      middleware: CommonMiddleware;
      upload: multer.Multer;
+     uploadS3: multer.Multer;
      fileSize: number = Number(process.env.CLIENT_FILE_SIZE);
      filesCount: number = Number(process.env.CLIENT_FILE_COUNT);
 
@@ -24,7 +28,8 @@ export abstract class CommonRoute {
           this.middleware = middleware;
           this.configureRoutes();
           const __filepath__ = path.resolve(__dirname, '../public/files');
-          this.upload = multer({ dest: __filepath__, limits: { fileSize: this.fileSize, files: this.filesCount } })
+          this.upload = multer({ dest: __filepath__, limits: { fileSize: this.fileSize, files: this.filesCount } });
+          this.uploadS3 = multer(this.s3Config()!)
      }
 
      getName() {
@@ -38,6 +43,98 @@ export abstract class CommonRoute {
 
      get fileOpts() {
           return { fileSize: this.fileSize, filesCount: this.filesCount }
+     }
+
+     s3Config() {
+          try {
+               const s3: aws.S3 = new aws.S3({
+                    accessKeyId: process.env.BUCKETEER_AWS_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.BUCKETEER_AWS_SECRET_ACCESS_KEY,
+                    region: process.env.BUCKETEER_AWS_REGION
+               })
+               const storage = multerS3({
+                    s3: s3,
+                    bucket: process.env.BUCKETEER_BUCKET_NAME || '',
+                    contentType: multerS3.AUTO_CONTENT_TYPE,
+                    metadata: function (req, file, cb) {
+                         cb(null, { fieldName: file.fieldname });
+                    },
+                    key: function (req, file, cb) {
+                         cb(null, Date.now().toString()+(Math.random()*1000000000))
+                    }
+               });
+
+               const limit = { fileSize: this.fileSize, files: this.filesCount }
+               return {storage, limit}
+          }
+          catch (err) {
+          }
+     }
+
+     async uploadFilesAWS() {
+          try {
+               const upload = this.uploadS3.any();
+               this.app.post('/file/uploadAWS',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    upload,
+                    async (req: Request, res: Response, next: NextFunction) => {
+                         try {
+                              if ((req?.files as Array<any>)[0]) {
+                                   const files = (req.files as Array<any>).map((value) => {
+                                        return {
+                                             key: value.key,
+                                             location: value.location,
+                                             bucket:value.bucket
+                                        }
+                                   })
+                                   const filesDoc: File[] = await FileModel.insertMany(files);
+                                   res.status(200).send({ status: true, message: "success", data: filesDoc })
+                              }
+                         }
+                         catch (err) {
+                              next(err)
+                         }
+                    })
+          }
+          catch (err) {
+          }
+     }
+
+     async getFilesAWS(authMiddleware?: RequestHandler) {
+          try {
+               const s3: aws.S3 = new aws.S3({
+                    accessKeyId: process.env.BUCKETEER_AWS_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.BUCKETEER_AWS_SECRET_ACCESS_KEY,
+                    region: process.env.BUCKETEER_AWS_REGION
+               })
+
+               this.app.get('/fileAWS/:fileId',
+                    this.middleware.authorized,
+                    authMiddleware || this.middleware.authenticate,
+                    async (req: Request, res: Response, next: NextFunction) => {
+                         try {
+                              const { params } = req;
+                              const files = await FileModel.findById(params.fileId);
+                              if (files) {
+                                   s3.getObject({
+                                        Key: files?.key || '',
+                                        Bucket: files?.bucket || ''
+                                   }, (error, data) => {
+                                        if (data) res.status(200).send({ status: true, message: "success", data: data });
+                                        else res.status(200).send({ status: true, message: "success", data: '' });
+                                   });
+                              }
+                              else res.status(404).send({ status: false, message: "file not found"})
+                         }
+                         catch (err) {
+                              next(err)
+                         }
+                    }
+               )
+          }
+          catch (err) {
+          }
      }
 
      async uploadFiles() {
@@ -66,7 +163,6 @@ export abstract class CommonRoute {
                                                   FileModel.deleteOne({ _id: file._id });
                                                   (new FileManipulation()).deleteFile(file.path);
                                              }
-                                             console.log(compareResult, "comapreResult result");
                                         }
                                    }
                                    res.status(200).send({

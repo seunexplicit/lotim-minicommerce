@@ -16,6 +16,8 @@ export class UsersRoute extends CommonRoute {
           this.schema = new Schema();
           this.fileOpts = { fileSize: Number(process.env.CLIENT_FILE_SIZE), filesCount: Number(process.env.CLIENT_FILE_COUNT || 0) };
           this.uploadFiles();
+          this.uploadFilesAWS();
+          this.getFilesAWS((req: Request, res: Response, next: NextFunction) => next());
           this.getFiles((req: Request, res: Response, next: NextFunction) => next());
      }
 
