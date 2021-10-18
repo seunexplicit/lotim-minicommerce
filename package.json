@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "description": "lotim vet mini ecommerce backend system",
   "main": "index.js",
-     "scripts": {
-          "test": "echo \"Error: no test specified\" && exit 1",
-          "debug": "export DEBUG=* && npm run start",
-          "start": "pm2-runtime start ecosystem.config.js --env production --only production",
-          "start:dev": "pm2-runtime kill && pm2-runtime start ecosystem.config.js --env development --only development",
-          "postinstall": "tsc",
-          "deploy": "git add . && git commit -m Heroku && git push heroku main",
-          "heroku-postbuild": "npm install pm2"
-     },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": "export DEBUG=* && npm run start",
+    "start": "pm2-runtime start ecosystem.config.js --env production --only production",
+    "start:dev": "pm2-runtime kill && pm2-runtime start ecosystem.config.js --env development --only development",
+    "postinstall": "tsc",
+    "deploy": "git add . && git commit -m Heroku && git push heroku main",
+    "heroku-postbuild": "npm install pm2"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/seunexplicit/lotim-minicommerce.git"
@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/seunexplicit/lotim-minicommerce#readme",
   "devDependencies": {
+    "@types/aws-sdk": "^2.7.0",
     "@types/cors": "^2.8.12",
     "@types/debug": "^4.1.7",
     "@types/dotenv": "^8.2.0",
@@ -44,6 +45,7 @@
     "@types/mailgun-js": "^0.22.12",
     "@types/mongoose": "^5.11.97",
     "@types/multer": "^1.4.7",
+    "@types/multer-s3": "^2.7.10",
     "@types/node": "^16.9.1",
     "@types/validator": "^13.6.3",
     "source-map-support": "^0.5.19",
@@ -52,6 +54,7 @@
     "typescript": "^4.3.5"
   },
   "dependencies": {
+    "aws-sdk": "^2.1009.0",
     "cors": "^2.8.5",
     "debug": "^4.3.2",
     "dotenv": "^10.0.0",
@@ -64,6 +67,7 @@
     "mailgun.js": "^3.5.7",
     "mongoose": "^5.13.5",
     "multer": "^1.4.3",
+    "multer-s3": "^2.10.0",
     "pm2": "^5.1.2",
     "ts-node": "^10.2.1",
     "validator": "^13.6.0",

@@ -108,6 +108,13 @@ export default class UserValidator {
                                         'number.min': 'variation must have a price greater than 1'
                                    }),
                               discount: joi.number()
+                                   .min(0)
+                                   .max(1)
+                                   .messages({
+                                        'number.base': 'discount cannot be empty',
+                                        'number.min': 'discount min is #min',
+                                        'number.max':'discount max is #max'
+                                   })
 
                          })
                     )

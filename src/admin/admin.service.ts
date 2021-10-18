@@ -55,7 +55,7 @@ export class AdminService {
                          process.env.ADMIN_API_KEY||''
                     );
                     res.status(200).send({
-                         status: 200,
+                         status: true,
                          message: "Verification successful",
                          data: adminCredentials
                     });

@@ -20,7 +20,9 @@ export class AdminRoute extends CommonRoute {
           super(app, "AdminRoute", middleware);
           this.fileOpts = { fileSize: Number(process.env.ADMIN_FILE_SIZE), filesCount: Number(process.env.ADMIN_FILE_COUNT || 0) };
           this.uploadFiles();
+          this.uploadFilesAWS();
           this.getFiles();
+          this.getFilesAWS();
           this.schema = new Schema();
           this.service = new AdminService();
           this.product = new ProductService();

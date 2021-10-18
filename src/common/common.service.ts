@@ -1,5 +1,6 @@
 import mailgun from 'mailgun-js';
 import util from 'util';
+import { FileModel, File } from './common.model';
 
 export class MailService {
 
@@ -23,7 +24,18 @@ export class MailService {
      async sendHTMLMessage() {
 
      }
-     async sendHTMLMessageWAttachment() {}
+     async sendHTMLMessageWAttachment() { }
+
+     async removeSimilarFile(file: File[]) {
+          try {
+
+          }
+          catch (err) {
+               throw err
+          }
+     }
 }
+
+
 
 //export class
