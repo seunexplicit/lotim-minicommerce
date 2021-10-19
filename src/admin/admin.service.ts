@@ -54,12 +54,16 @@ export class AdminService {
                          Number(process.env.ADMIN_CREDENTIAL_EXPIRATION),
                          process.env.ADMIN_API_KEY||''
                     );
-                    res.status(200).send({
+
+                    res
+                    .cookie('credentials', adminCredentials.token, { maxAge: (adminCredentials.expiresTime).getTime() })
+                    .status(200).send({
                          status: true,
                          message: "Verification successful",
                          data: adminCredentials
                     });
                }
+               
                else res.status(401).send({ status: false, message: "Invalid/wrong authentication details" });
           }
           catch (err) {

@@ -297,6 +297,7 @@ export class UserService {
                     enquiry: body.enquiry,
                     user: user?._id,
                });
+               console.log(user, enquiry);
                await enquiry.save();
                res.status(200).send({ status: true, message: "Enquiry submitted successfully", data: enquiry })
           }
