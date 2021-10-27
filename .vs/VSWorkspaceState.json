@@ -1,14 +1,15 @@
 {
   "ExpandedNodes": [
     "",
-    "\\node_modules\\pm2",
-    "\\node_modules\\pm2\\lib",
-    "\\node_modules\\tsconfig-paths",
+    "\\Local settings (.vs)",
+    "\\Local settings (.vs)\\lotim-backend",
     "\\src",
+    "\\src\\admin",
+    "\\src\\common",
     "\\src\\lib",
     "\\src\\products",
     "\\src\\users"
   ],
-  "SelectedNode": "\\ecosystem.config.js",
+  "SelectedNode": "\\src\\index.ts",
   "PreviewInSolutionExplorer": false
 }
