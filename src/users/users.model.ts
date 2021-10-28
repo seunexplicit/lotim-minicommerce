@@ -96,6 +96,7 @@ export interface Orders extends IOrder, Document {
      closedAt: Date,
      receivedAt: Date,
      deliveryCommencedAt: Date,
+     _delete:boolean
 }
 
 const OrdersSchema = new Schema<Orders>({
@@ -111,8 +112,9 @@ const OrdersSchema = new Schema<Orders>({
      paymentRefernce: String,
      paid: Boolean,
      status: {
-          type: String, enum: ['open', 'delivery', 'closed', 'completed', 'cancelled']
+          type: String, enum: ['open', 'delivery', 'closed', 'completed', 'cancelled'], default:'open'
      },
+     _delete: { type: Boolean, default: false, select:false },
      user: { type: Schema.Types.ObjectId, ref: 'Users' },
      orders: [
           {
@@ -144,7 +146,7 @@ OrdersSchema.post("save", async function (doc, next) {
                UsersModel.findOne({ _id: this.user }),
                PaymentModel.findOne({ 'data.reference': this.payment })
           ]);
-          users?.orders?.push(this._id);
+          if (users && !users.orders?.includes(this._id)) users.orders?.push(this._id);
           if (payment) {
                payment.productId = this._id;
                payment.paymentFor = "product";
@@ -191,7 +193,7 @@ UserActivitiesSchema.pre("deleteOne", { query: true, document: false }, async fu
 UserActivitiesSchema.post("save", async function (doc, next) {
      try {
           const users = await UsersModel.findOne({ _id: this.user });
-          users?.activities?.push(this._id);
+          if (users && !users.activities?.includes(this._id)) users?.activities?.push(this._id);
           if (users?.lastActionDate) users["lastActionDate"] = new Date();
           await users?.save();
           next()
@@ -210,7 +212,8 @@ interface Enquiries extends Document {
      attendedDate?: Date,
      remarks?: string,
      status: 'open' | 'closed' | 'terminated',
-     user: string
+     user: string,
+     _delete:boolean
 }
 
 const EnquirySchema = new Schema<Enquiries>({
@@ -220,6 +223,7 @@ const EnquirySchema = new Schema<Enquiries>({
      remarks: String,
      response: String,
      status: { type: String, enum: ['open', 'closed', 'terminated'] },
+     _delete: { type: Boolean, default: false, select:false },
      user: { type: Schema.Types.ObjectId, ref: 'Users' }
 }, {
      timestamps: true
@@ -238,7 +242,7 @@ EnquirySchema.pre("deleteOne", { query: true, document: false }, async function 
 EnquirySchema.post("save", async function (doc, next) {
      try {
           const users = await UsersModel.findOne({ _id: this.user });
-          users?.enquiries?.push(this._id);
+          if (users && !users.enquiries?.includes(this._id)) users?.enquiries?.push(this._id);
           if (users?.lastActionDate) users["lastActionDate"] = new Date();
           await users?.save();
           next()
@@ -263,7 +267,8 @@ interface IAppointment extends Appointment, Document {
      status: 'open' | 'closed' | 'terminated',
      remarks?: string,
      user: string,
-     closeDate: Date
+     closeDate: Date,
+     _delete:boolean
 }
 
 const AppointmentSchema: Schema<IAppointment> = new Schema({
@@ -275,6 +280,7 @@ const AppointmentSchema: Schema<IAppointment> = new Schema({
      closedDate: Date,
      bookingsDate: Date,
      remarks: String,
+     _delete: {type:Boolean, default:false, select:false },
      user: { type: Schema.Types.ObjectId, ref: 'Users' }
 }, {
      timestamps: true
@@ -293,7 +299,7 @@ AppointmentSchema.pre("deleteOne", { query: true, document: false }, async funct
 AppointmentSchema.post("save", async function (doc, next) {
      try {
           const users = await UsersModel.findOne({ _id: this.user });
-          users?.appointments?.push(this._id);
+          if (users && !users.appointments?.includes(this._id)) users?.appointments?.push(this._id);
           if (users?.lastActionDate) users["lastActionDate"] = new Date();
           await users?.save();
           next()

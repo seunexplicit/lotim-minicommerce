@@ -123,8 +123,22 @@ export class AdminService {
           try {
                const { params } = req;
                const appointment = await AppointmentModel.findOne({ _id: params.id })
-                    .populate('user')
+                    .populate('user').select('+_delete')
                return res.status(200).send({ status: true, message: "success", data: appointment });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async deleteAppointment(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               const appointment = await AppointmentModel.findOne({ _id: params.id }).select('_delete');
+               if (!appointment?._delete) return res.status(409).send({ status: false, message: "Enquiry cannot be deleted" });
+               
+               await AppointmentModel.deleteOne({ _id: params.id });
+               res.status(200).send({ status: true, message: "Enquiry deleted" });
           }
           catch (err) {
                next(err);
@@ -141,7 +155,8 @@ export class AdminService {
                     [
                          AppointmentModel.find({ user: queryData })
                          .skip(skip)
-                         .limit(limit),
+                              .limit(limit)
+                         .select('+_delete'),
                          AppointmentModel.countDocuments({ user: queryData })
                     ] : [
                          AppointmentModel.find()
@@ -160,13 +175,14 @@ export class AdminService {
           try {
                const { params } = req;
                const enquiry = await EnquiryModel.findOne({ _id: params.id })
-                                        .populate('user')
+                                        .populate('user').select('+_delete')
                return res.status(200).send({ status: true, message: "success", data: enquiry });
           }
           catch (err) {
                next(err);
           }
      }
+
      async getEnquiries(req: Request, res: Response, next: NextFunction) {
           try {
                const { query } = req;
@@ -176,7 +192,8 @@ export class AdminService {
                const [enquiries, total] = await Promise.all(queryData?[
                     EnquiryModel.find({ user: queryData })
                          .skip(skip)
-                         .limit(limit),
+                         .limit(limit)
+                         .select('+_delete'),
                     EnquiryModel.countDocuments({ user: queryData })
                ] : [
                          EnquiryModel.find()
@@ -185,6 +202,20 @@ export class AdminService {
                          EnquiryModel.countDocuments()
                     ])
                return res.status(200).send({ status: true, message: "success", data: { enquiries: enquiries, document: { total, limit, skip } } });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async deleteEnquiry(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               const enquiry = await EnquiryModel.findOne({ _id: params.id }).select('_delete');
+               console.log(enquiry);
+               if (!enquiry?._delete) return res.status(409).send({ status: false, message: "Enquiry cannot be deleted" });
+               await EnquiryModel.deleteOne({ _id: params.id });
+               res.status(200).send({ status: true, message: "Enquiry deleted" });
           }
           catch (err) {
                next(err);

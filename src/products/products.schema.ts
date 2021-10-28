@@ -122,4 +122,42 @@ export default class ProductValidator {
           next();
      }
 
+     Animalvalidator(req: express.Request, res: express.Response, next: express.NextFunction) {
+          const schema = joi.object({
+               animals: joi.array()
+                    .items(joi.string())
+                    .min(1)
+                    .messages({
+                         'array.min': 'must contain at least one animal list',
+                         'array.base':'must be an array'
+                    })
+          })
+
+          const validator = schema.validate(req.body);
+          if (validator.error) {
+               return res.status(400).send({ status: false, message: validator.error?.details[0]?.message })
+          }
+
+          next();
+     }
+
+     Categoryvalidator(req: express.Request, res: express.Response, next: express.NextFunction) {
+          const schema = joi.object({
+               categories: joi.array()
+                    .items(joi.string())
+                    .min(1)
+                    .messages({
+                         'array.min': 'must contain at least one category list',
+                         'array.base': 'must be an array'
+                    })
+          })
+
+          const validator = schema.validate(req.body);
+          if (validator.error) {
+               return res.status(400).send({ status: false, message: validator.error?.details[0]?.message })
+          }
+
+          next();
+     }
+
 }

@@ -16,8 +16,10 @@ export class UsersRoute extends CommonRoute {
           this.schema = new Schema();
           this.fileOpts = { fileSize: Number(process.env.CLIENT_FILE_SIZE), filesCount: Number(process.env.CLIENT_FILE_COUNT || 0) };
           this.uploadFiles();
-          this.uploadFilesAWS();
-          this.getFilesAWS((req: Request, res: Response, next: NextFunction) => next());
+         /* this.uploadFilesAWS();
+          this.getFilesAWS((req: Request, res: Response, next: NextFunction) => next());*/
+          this.uploadFilesCloudinary();
+          this.getFilesCloudinary((req: Request, res: Response, next: NextFunction) => next());
           this.getFiles((req: Request, res: Response, next: NextFunction) => next());
      }
 
@@ -36,6 +38,10 @@ export class UsersRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.service.getEnquiry)
+               .delete('/enquiry/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.deleteEnquiry)
                .post('/booking',
                     this.middleware.authorized,
                     this.schema.bookingsValidator,
@@ -48,6 +54,10 @@ export class UsersRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.service.getAppointment)
+               .delete('/booking/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.deleteAppointment)
                .post('/activities',
                     this.middleware.authorized,
                     this.schema.activitiesValidator,

@@ -91,10 +91,27 @@ const ProductsSchema = new Schema<Products>({
 
 export const ProductsModel: Model<Products> = model<Products>('products', ProductsSchema);
 
-interface Category {
+export interface Category {
      value:string
 }
 
-interface Animal {
+interface ICategory extends Document{ }
+
+export interface Animal {
      value:string
 }
+
+interface IAnimal extends Document { }
+
+
+const CategorySchema = new Schema<ICategory>({
+     value: { type: String, unique: true }
+});
+
+export const CategoryModel = model<ICategory>('CategoryModel', CategorySchema);
+
+const AnimalSchema = new Schema<IAnimal>({
+     value: { type: String, unique: true }
+})
+
+export const AnimalModel = model<IAnimal>('AnimalModel', AnimalSchema);

@@ -7,6 +7,9 @@ import FileManipulation from '../lib/file.lib';
 import aws from 'aws-sdk';
 import multerS3 from 'multer-s3';
 import util from 'util';
+import cloudinary from 'cloudinary';
+import stream from 'stream';
+import streamPromise from 'stream/promises';
 
 
 export abstract class CommonRoute {
@@ -15,6 +18,7 @@ export abstract class CommonRoute {
      middleware: CommonMiddleware;
      upload: multer.Multer;
      uploadS3: multer.Multer;
+     uploadCloudinary: multer.Multer;
      fileSize: number = Number(process.env.CLIENT_FILE_SIZE);
      filesCount: number = Number(process.env.CLIENT_FILE_COUNT);
 
@@ -29,7 +33,8 @@ export abstract class CommonRoute {
           this.configureRoutes();
           const __filepath__ = path.resolve(__dirname, '../public/files');
           this.upload = multer({ dest: __filepath__, limits: { fileSize: this.fileSize, files: this.filesCount } });
-          this.uploadS3 = multer(this.s3Config()!)
+          this.uploadS3 = multer(this.s3Config()!);
+          this.uploadCloudinary = multer({ storage: multer.memoryStorage(), limits: { fileSize: this.fileSize, files: this.filesCount } })
      }
 
      getName() {
@@ -134,6 +139,87 @@ export abstract class CommonRoute {
                )
           }
           catch (err) {
+          }
+     }
+
+
+     async uploadFilesCloudinary() {
+          try {
+               const upload = this.uploadCloudinary.any();
+               this.app.post('/file/uploadCloudinary',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    upload, 
+                    async (req: Request, res: Response, next: NextFunction) => {
+                         try {
+                              const files: Express.Multer.File[] = (req['files'] ?? []) as Express.Multer.File[];
+                              const fileStorage: File[] = [];
+                              const fileLen = files.length;
+                              if (!fileLen) return res.status(400).send({status:false, message:"File is required"})
+                              
+                              for (let j = 0; j < fileLen; j++) {
+
+                                   const readableStream = new stream.Readable();
+                                   readableStream.push(new Uint8Array(files[j].buffer));
+                                   readableStream.push(null);
+
+                                   const cStream = cloudinary.v2.uploader.upload_stream(async (err, response) => {
+                                        if (err) {
+                                             return res.status(500).send({ status: false, message: "An error occur" });
+                                        }
+                                        const fileModel = new FileModel({
+                                             originalname: files[j].originalname,
+                                             mimetype: files[j].mimetype,
+                                             path: response?.url,
+                                             key: response?.public_id
+                                        });
+
+                                        await fileModel.save();
+                                        fileStorage.push(fileModel);
+                                        if (fileStorage.length === fileLen) {
+                                             res.status(200).send({ message: 'success', status: true, data: fileStorage });
+                                        }
+
+                                   })
+
+                                   readableStream.on('data', (chunk) => {
+                                        cStream.write(chunk);
+                                   })
+
+                                   readableStream.on('end', () => {
+                                        cStream.end();
+                                   })
+                              }
+
+                              
+                         }
+                         catch (err) {
+                              next(err);
+                         }
+                    }
+               )
+          }
+          catch (err) {}
+     }
+
+     async getFilesCloudinary(authMiddleware?: RequestHandler) {
+          try {
+               this.app.post('/fileCloudinary/:fileId',
+                    this.middleware.authorized,
+                    authMiddleware || this.middleware.authenticate,
+                    async (req: Request, res: Response, next: NextFunction) => {
+                         try {
+                              const { params } = req;
+                              const file = await FileModel.findOne({ _id: params.fileId });
+                              res.status(200).send({ message: 'success', status: true, data: file });
+                         }
+                         catch (err) {
+                              next(err);
+                         }
+                    })
+          }
+          catch (err) {
+          
           }
      }
 

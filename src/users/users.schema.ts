@@ -161,6 +161,10 @@ export default class UserValidator {
                          'boolean.required': `hasPaid is required`,
                          'boolean.base':`delivery cannot be empty`,
                     }),
+               primaryAddress: joi.boolean()
+                    .messages({
+                         'boolean.base':'primaryAddress must be boolean',
+                    }),
                deliveryAddress: joi.string()
                     .when('delivery', { is: true, then: joi.string().required() })
                     .min(5)

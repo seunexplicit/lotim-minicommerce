@@ -6,6 +6,7 @@ import { AdminMiddleware } from './admin.middleware';
 import { AdminService } from './admin.service';
 import { ProductService } from '../products/product.service';
 import { UserService } from '../users/users.service';
+import ProductValidator from '../products/products.schema';
 
 export class AdminRoute extends CommonRoute {
      private schema: Schema;
@@ -20,9 +21,11 @@ export class AdminRoute extends CommonRoute {
           super(app, "AdminRoute", middleware);
           this.fileOpts = { fileSize: Number(process.env.ADMIN_FILE_SIZE), filesCount: Number(process.env.ADMIN_FILE_COUNT || 0) };
           this.uploadFiles();
-          this.uploadFilesAWS();
+          //this.uploadFilesAWS();
           this.getFiles();
-          this.getFilesAWS();
+          //this.getFilesAWS();
+          this.uploadFilesCloudinary();
+          this.getFilesCloudinary();
           this.schema = new Schema();
           this.service = new AdminService();
           this.product = new ProductService();
@@ -33,6 +36,7 @@ export class AdminRoute extends CommonRoute {
           this.product = new ProductService();
           this.user = new UserService();
           this.schema = new Schema();
+          const productSchema = new ProductValidator();
           this.app.post('/login',
                this.middleware.authorized,
                this.schema.loginValidator,
@@ -102,7 +106,7 @@ export class AdminRoute extends CommonRoute {
                .delete('/booking/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    this.service.getAppointment)
+                    this.service.deleteAppointment)
                .patch('/booking/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
@@ -119,8 +123,7 @@ export class AdminRoute extends CommonRoute {
                .delete('/enquiry/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    this.service.deleteEnquiry)
                .patch('/enquiry/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
@@ -131,11 +134,42 @@ export class AdminRoute extends CommonRoute {
                     this.middleware.authenticate,
                     async (req: express.Request, res: express.Response) => {
                     })
-               .delete('/enquiry',
+               .delete('/activities/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,
-                    async (req: express.Request, res: express.Response) => {
-                    })
+                    async () => { })
+               .post('/category',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    productSchema.Categoryvalidator,
+                    this.product.setCategory
+          )
+               .get('/category',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.product.getCategories
+          )
+               .delete('/category/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.product.deleteCategory
+          )
+               .post('/animal',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    productSchema.Animalvalidator,
+                    this.product.setAnimal
+               )
+               .get('/animal',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.product.getAnimals
+               )
+               .delete('/animal/:id',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.product.deleteAnimal
+               )
                 //this.uploadFiles(this.app) 
           //this.getFiles(this.app);
           return this.app;

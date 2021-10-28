@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { ProductsModel } from "./products.model";
+import { CategoryModel, ProductsModel, Category, Animal, AnimalModel } from "./products.model";
 
 export class ProductService {
 
@@ -90,6 +90,78 @@ export class ProductService {
           }
           catch (err) {
                next(err)
+          }
+     }
+
+     async setCategory(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { body } = req;
+               const categories:Category[] = (body.categories as Array<string>).map((value) => {
+                    return { value };
+               });
+               const categoryDoc = await CategoryModel.insertMany(categories);
+               res.status(200).send({ message: "success", status: true, data: categoryDoc });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getCategories(req: Request, res: Response, next: NextFunction) {
+          try {
+               const categories = await CategoryModel.find();
+               res.status(200).send({ message: "success", status: true, data: categories });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async deleteCategory(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               await CategoryModel.deleteOne({ _id: params.id });
+               res.status(200).send({ message: "success", status: true });
+
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async setAnimal(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { body } = req;
+               const animals: Animal[] = (body.animals as Array<string>).map((value) => {
+                    return { value };
+               });
+               const animalDoc = await AnimalModel.insertMany(animals);
+               res.status(200).send({ message: "success", status: true, data: animalDoc });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getAnimals(req: Request, res: Response, next: NextFunction) {
+          try {
+               const animals = await AnimalModel.find();
+               res.status(200).send({ message: "success", status: true, data: animals });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async deleteAnimal(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               await AnimalModel.deleteOne({ _id: params.id });
+               res.status(200).send({ message: "success", status: true });
+
+          }
+          catch (err) {
+               next(err);
           }
      }
 }

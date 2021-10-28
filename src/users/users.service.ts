@@ -43,27 +43,26 @@ export class UserService {
      async createNewUser(req: Request, res: Response, next: NextFunction) {
           try {
                const body: ICreateUser = req.body;
-               const user = await UsersModel.findOne({ email: body.email })
+               let user = await UsersModel.findOne({ email: body.email })
                     .select('password email');
 
                if (user?.password) return res.status(409).send({ status: false, message: "User already exist" });
                const hashPassword = Hash(body.password || '');
-               let newUser: IUsers;
-               if (user) newUser = await user.update({ $set: { ...body, password: hashPassword } })
+               if (user) await user.update({ $set: { ...body, password: hashPassword } })
                else {
-                    const _newUser = new UsersModel({ ...body, password: hashPassword });
-                    newUser = await _newUser.save();
+                    user = new UsersModel({ ...body, password: hashPassword });
+                    await user.save();
                };
 
                const credentials = LoginEncryption(
                     hashPassword,
-                    newUser?.email || '',
-                    newUser?._id,
+                    user?.email || '',
+                    user?._id,
                     Number(process.env.CLIENT_CREDENTIAL_EXPIRATION),
                     process.env.CLIENT_API_KEY || ''
                );
-               newUser.password = undefined;
-               return res.status(200).send({ status: true, message:"Account created successfully", data:{ credentials, user: newUser  } })
+               user.password = undefined;
+               return res.status(200).send({ status: true, message:"Account created successfully", data:{ credentials, user: user  } })
 
           }
           catch (err) {
@@ -258,10 +257,10 @@ export class UserService {
                const skip: number = query.skip ? Number(query.skip) : 0;
                const limit: number = query.limit ? Number(query.limit) : 20;
                const [appointment, total] = await Promise.all([
-                    AppointmentModel.find({ user: credentialId })
+                    AppointmentModel.find({ user: credentialId, _delete:false })
                          .skip(skip)
                          .limit(limit),
-                    AppointmentModel.countDocuments({ user: credentialId })
+                    AppointmentModel.countDocuments({ user: credentialId, _delete: false })
                ])
                return res.status(200).send({ status: true, message: "success", data: { appointment:appointment, document: { total, limit, skip } } });
           }
@@ -273,8 +272,19 @@ export class UserService {
      async getAppointment(req: Request, res: Response, next: NextFunction) {
           try {
                const { credentialId, params } = req;
-               const appointment = await AppointmentModel.findOne({ _id: params.id, user: credentialId })
+               const appointment = await AppointmentModel.findOne({ _id: params.id, user: credentialId, _delete:false })
                return res.status(200).send({ status: true, message: "success", data: appointment });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async deleteAppointment(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { credentialId, params } = req;
+               await AppointmentModel.updateOne({ _id: params.id, user: credentialId }, { _delete: true });
+               return res.status(200).send({ status: true, message: "success" })
           }
           catch (err) {
                next(err);
@@ -293,11 +303,11 @@ export class UserService {
                     user["firstName"] = body.name
                     user.save();
                }
-               const enquiry = await new EnquiryModel({
+               const enquiry = new EnquiryModel({
                     enquiry: body.enquiry,
                     user: user?._id,
                });
-               console.log(user, enquiry);
+
                await enquiry.save();
                res.status(200).send({ status: true, message: "Enquiry submitted successfully", data: enquiry })
           }
@@ -313,10 +323,10 @@ export class UserService {
                const skip: number = query.skip ? Number(query.skip) : 0;
                const limit: number = query.limit ? Number(query.limit) : 20;
                const [enquiries, total] = await Promise.all([
-                    EnquiryModel.find({ user: credentialId })
+                    EnquiryModel.find({ user: credentialId, _delete:false })
                          .skip(skip)
                          .limit(limit),
-                    EnquiryModel.countDocuments({ user: credentialId })
+                    EnquiryModel.countDocuments({ user: credentialId, _delete:false })
                ])
                return res.status(200).send({ status: true, message: "success", data: { enquiries: enquiries, document: { total, limit, skip } }});
           }
@@ -328,11 +338,22 @@ export class UserService {
      async getEnquiry(req: Request, res: Response, next: NextFunction) {
           try {
                const { credentialId, params } = req;
-               const enquiry = await EnquiryModel.findOne({ _id: params.id, user: credentialId })
+               const enquiry = await EnquiryModel.findOne({ _id: params.id, user: credentialId, _delete:false })
                return res.status(200).send({ status: true, message: "success", data: enquiry });
           }
           catch (err) {
                next(err);
+          }
+     }
+
+     async deleteEnquiry(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { credentialId, params } = req;
+               await EnquiryModel.updateOne({ _id: params.id, user: credentialId }, { _delete: true });
+               return res.status(200).send({status:true, message:"success"})
+          }
+          catch (err) {
+
           }
      }
 
