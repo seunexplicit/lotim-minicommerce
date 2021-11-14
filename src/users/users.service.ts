@@ -44,7 +44,7 @@ export class UserService {
           try {
                const body: ICreateUser = req.body;
                let user = await UsersModel.findOne({ email: body.email })
-                    .select('password email');
+                    .select('+password +email');
 
                if (user?.password) return res.status(409).send({ status: false, message: "User already exist" });
                const hashPassword = Hash(body.password || '');
@@ -175,6 +175,10 @@ export class UserService {
                     status: 'open',
                     payment: paymentSchema?._id,
                };
+
+               if (body.primaryAddress) {
+                    UsersModel.updateOne({ _id: credentialId }, { address:body.deliveryAddress })
+               }
 
                const newOrder = new OrdersModel(orderData);
                await newOrder.save();

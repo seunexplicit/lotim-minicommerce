@@ -1,12 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Local settings (.vs)",
-    "\\Local settings (.vs)\\lotim-backend",
     "\\src",
     "\\src\\admin",
     "\\src\\common",
-    "\\src\\lib",
     "\\src\\products",
     "\\src\\users"
   ],
