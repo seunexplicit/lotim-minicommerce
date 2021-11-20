@@ -5,7 +5,7 @@ import { RandomValue } from '../lib/utility.lib';
 import { MailService } from '../common/common.service';
 import { AdminModel } from './admin.model';
 import Login from '../lib/login';
-import { AppointmentModel, EnquiryModel, OrdersModel, UsersModel } from '../users/users.model';
+import { AppointmentModel, EnquiryModel, OrdersModel, PaymentModel, UsersModel } from '../users/users.model';
 import { Mongoose, SchemaType, SchemaTypes, Types } from 'mongoose';
 
 export class AdminService {
@@ -113,6 +113,36 @@ export class AdminService {
                ])
 
                return res.status(200).send({ status: true, message: "success", data: { orders: orders, document: { total, limit, skip } }});
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getPayments(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { query } = req;
+               const skip: number = query.skip ? Number(query.skip) : 0;
+               const limit: number = query.limit ? Number(query.limit) : 20;
+               const [payments, total] = await Promise.all([
+                    PaymentModel.find()
+                         .skip(skip)
+                         .limit(limit),
+                    PaymentModel.countDocuments()
+               ])
+
+               return res.status(200).send({ status: true, message: "success", data: { payments: payments, document: { total, limit, skip } } });
+          }
+          catch (err) {
+               next(err);
+          }
+     }
+
+     async getOnePayment(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { params } = req;
+               const payment = await PaymentModel.findOne({_id:params.paymentId})
+               return res.status(200).send({ status: true, message: "success", data: payment });
           }
           catch (err) {
                next(err);

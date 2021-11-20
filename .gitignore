@@ -10,4 +10,6 @@ dist
 
 Local settings*
 
+.vs/
+
 src/logger

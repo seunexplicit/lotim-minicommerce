@@ -3,10 +3,11 @@ import { JsonWebTokenError } from "jsonwebtoken";
 import { CommonMiddleware } from "../common/common.middleware";
 import { DecryptToken } from "../lib/login";
 import crypto from 'crypto';
+import { UsersModel } from "./users.model";
 
 export class UserMiddleware extends CommonMiddleware {
 
-     authenticate(req: Request, res: Response, next: NextFunction): any {
+     async authenticate(req: Request, res: Response, next: NextFunction): Promise<any> {
           try {
                let auth = req.headers['authorization'];
                if (auth?.split(' ')[1]) auth = (auth?.split(' '))[1];
@@ -17,7 +18,8 @@ export class UserMiddleware extends CommonMiddleware {
                req.credentialEmail = userCredentials['email'];
                req.credentialId = userCredentials['id'];
                req.credentialPassword = userCredentials['password'];
-               if (!req.credentialEmail || !req.credentialPassword) return res.status(401).send('Invalid/expired authentication token');
+               const user = await UsersModel.findOne({ _id: req.credentialId }).select('+password');
+               if (req.credentialEmail !== user?.email || req.credentialPassword !== user.password) return res.status(401).send('Invalid/expired authentication token');
                next();
           }
           catch (err) {

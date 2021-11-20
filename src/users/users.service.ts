@@ -44,7 +44,7 @@ export class UserService {
           try {
                const body: ICreateUser = req.body;
                let user = await UsersModel.findOne({ email: body.email })
-                    .select('password email');
+                    .select('+password +email');
 
                if (user?.password) return res.status(409).send({ status: false, message: "User already exist" });
                const hashPassword = Hash(body.password || '');
@@ -67,6 +67,35 @@ export class UserService {
           }
           catch (err) {
                next(err);
+          }
+     }
+
+     async updateUser(req: Request, res: Response, next: NextFunction) {
+          try {
+               const { body, credentialId } = req;
+               const user = await UsersModel.findOne({_id:credentialId})
+                    .select('+password')
+               if (!user || user.password !== Hash(body.oldPassword || '')) {
+                    return res.status(400).send({status:false, message:"Invalid data/password"})
+               }
+
+               if (body.newPassword) body['password'] = Hash(body.newPassword);
+               await user.updateOne({ ...body })
+               let credentials;
+               if (body.email || body.newPassword) {
+                    credentials = LoginEncryption(
+                         Hash(body.newPassword),
+                         user?.email || '',
+                         user?._id,
+                         Number(process.env.CLIENT_CREDENTIAL_EXPIRATION),
+                         process.env.CLIENT_API_KEY || ''
+                    );
+               }
+               user.password = undefined;
+               res.status(200).send({ status: true, message: "Update successful", data: { user: user, credentials } })
+          }
+          catch (err) {
+               next(err)
           }
      }
 
@@ -96,6 +125,8 @@ export class UserService {
                const { body, credentialId } = req;
                let pResponse: any;
                let paymentSchema: Payment | undefined = undefined;
+               let checkIfOrderExist = await OrdersModel.findOne({ paymentReference: body.paymentReference });
+               if (checkIfOrderExist) return res.status(400).send({ status: false, message: "Order has been already been confirmed, Check with admin" });
                if (body.paid) {
                     pResponse = await VerifyPTransaction(body.paymentReference);
                     if (!pResponse?.status) return res.status(400).send({ status: false, message: "payment cannot be verified" });
@@ -115,7 +146,6 @@ export class UserService {
                               }
                          }
                     }
-
                     paymentSchema = await new PaymentModel(paymentData);
                     await paymentSchema.save();
                }
@@ -158,8 +188,9 @@ export class UserService {
 
                console.log(eachProducts);
 
+               const paystackPaidAmount = Number(pResponse?.data?.amount||0)/100
                if (body.paid &&
-                    ((totalPrice + 1 < pResponse?.data?.amount) || (totalPrice - 1 > pResponse?.data?.amount))) {
+                    ((totalPrice + 1 < paystackPaidAmount) || (totalPrice - 1 > paystackPaidAmount))) {
                     fraudulent = true;
                }
 
@@ -175,6 +206,10 @@ export class UserService {
                     status: 'open',
                     payment: paymentSchema?._id,
                };
+
+               if (body.primaryAddress) {
+                    UsersModel.updateOne({ _id: credentialId }, { address:body.deliveryAddress })
+               }
 
                const newOrder = new OrdersModel(orderData);
                await newOrder.save();
@@ -196,7 +231,11 @@ export class UserService {
                const [order, total] = await Promise.all([
                     OrdersModel.find({ user: credentialId })
                          .skip(skip)
-                         .limit(limit),
+                         .limit(limit)
+                         .populate({
+                              path: 'orders.product',
+                              select:'name imageUrl brand'
+                         }),
                     OrdersModel.countDocuments({ user: credentialId })
                ])
                return res.status(200).send({

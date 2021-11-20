@@ -1,4 +1,4 @@
-import { request } from "http";
+import { request } from "https";
 
 export const VerifyPTransaction = async (reference:string)=> {
 
@@ -15,22 +15,23 @@ export const VerifyPTransaction = async (reference:string)=> {
 				}
 			}
 			var reply = '';
-			var httpReq = request(option1);
-			httpReq.on('response', (response) => {
+			var httpReq = request(option1, (response) => {
+				response.setEncoding('utf8');
 				response.on('data', (chunk) => {
 					reply += chunk.toString();
 				});
 				response.on('end', () => {
 					resolve(JSON.parse(reply))
-				});
+				})
 			});
-
 			httpReq.on('error', (error) => {
 				reject(error);
 			});
+
+			httpReq.end()
 		});
 	}
 	catch (err) {
-
+		throw new err
      }
 }

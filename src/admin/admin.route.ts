@@ -87,6 +87,14 @@ export class AdminRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.service.getOneOrder)
+               .get('/payments',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.getPayments)
+               .get('/payment/:paymentId',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.service.getOnePayment)
                .get('/user/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,

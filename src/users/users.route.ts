@@ -80,7 +80,13 @@ export class UsersRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.schema.userValidator,
                     this.service.createNewUser
-               )
+          )
+               .patch('/account',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.schema.userUpdateSchema,
+                    this.service.updateUser
+          )
                .post('/login',
                     this.middleware.authorized,
                     this.schema.loginValidator,

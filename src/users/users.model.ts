@@ -109,7 +109,7 @@ const OrdersSchema = new Schema<Orders>({
      deliveryAddress: String,
      receivedAt: Date,
      fraudulent: { type: Boolean, select: false },
-     paymentRefernce: String,
+     paymentReference: String,
      paid: Boolean,
      status: {
           type: String, enum: ['open', 'delivery', 'closed', 'completed', 'cancelled'], default:'open'
