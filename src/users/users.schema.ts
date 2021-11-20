@@ -236,7 +236,7 @@ export default class UserValidator {
                     .min(5)
                     .required()
                     .messages({
-                         'string.min': `address min length is {#limit}`,
+                         'string.min': `address min length is {5}`,
                          'string.empty': `address cannot be empty`,
                          'string.required': `address is required`
                     })
@@ -312,4 +312,56 @@ export default class UserValidator {
           }
           next();
      }
+
+     userUpdateSchema(req: express.Request, res: express.Response, next: express.NextFunction) {
+          const schema = joi.object({
+               oldPassword: joi.string()
+                    .min(6)
+                    .required()
+                    .messages({
+                         'string.min': `minimum old password value allowed {6}`,
+                         'string.empty': `old password cannot be empty`,
+                         'string.required': `old password is required`,
+                         'string.base': `old password must be a string`
+                    }),
+               newPassword: joi.string()
+                    .min(6)
+                    .required()
+                    .messages({
+                         'string.min': `minimum new password value allowed {6}`,
+                         'string.empty': `new password cannot be empty`,
+                         'string.base': `new password must be a string`
+                    }),
+               email: joi.string()
+                    .custom(emailValidator, 'email validator')
+                    .messages({
+                         'string.base': `email must be a string`,
+                         'string.empty': `email cannot be empty`,
+                         'string.invalid': `not a valid email`,
+                    }),
+               phoneNumber: joi.string()
+                    .pattern(/^\+?[0-9]+$/)
+                    .custom(phoneNumber, 'mobile number validator')
+                    .messages({
+                         'string.base': `phone number must be a string`,
+                         'string.pattern': `not a valid phone number`,
+                         'string.empty': `phone number cannot be empty`,
+                         'string.invalid': `not a valid phone number`,
+                    }),
+               address: joi.string()
+                    .min(5)
+                    .messages({
+                         'string.base': `address must be a string`,
+                         'string.empty': `address cannot be empty`,
+                         'string.min': `minimum allowed address length {5}`,
+                    }),
+          });
+
+          const validationResult = schema.validate(req.body);
+          if (validationResult.error) {
+               return res.status(400).send({ status: false, message: validationResult.error.details[0].message })
+          }
+          next();
+     }
+
 }

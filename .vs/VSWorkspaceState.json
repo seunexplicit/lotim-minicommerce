@@ -1,12 +1,13 @@
 {
   "ExpandedNodes": [
     "",
+    "\\Local settings (.vs)",
     "\\src",
     "\\src\\admin",
     "\\src\\common",
     "\\src\\products",
     "\\src\\users"
   ],
-  "SelectedNode": "\\src\\index.ts",
+  "SelectedNode": "\\src\\users\\users.schema.ts",
   "PreviewInSolutionExplorer": false
 }
