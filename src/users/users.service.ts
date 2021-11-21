@@ -125,9 +125,10 @@ export class UserService {
                const { body, credentialId } = req;
                let pResponse: any;
                let paymentSchema: Payment | undefined = undefined;
-               let checkIfOrderExist = await OrdersModel.findOne({ paymentReference: body.paymentReference });
-               if (checkIfOrderExist) return res.status(400).send({ status: false, message: "Order has been already been confirmed, Check with admin" });
+               
                if (body.paid) {
+		    let checkIfOrderExist = await OrdersModel.findOne({ paymentReference: body.paymentReference });
+               	    if (checkIfOrderExist) return res.status(400).send({ status: false, message: "Order has been already been confirmed, Check with admin" });
                     pResponse = await VerifyPTransaction(body.paymentReference);
                     if (!pResponse?.status) return res.status(400).send({ status: false, message: "payment cannot be verified" });
                     const paymentData = {
