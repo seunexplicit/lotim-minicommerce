@@ -85,7 +85,7 @@ export class UserService {
                let credentials;
                if (body.email || body.newPassword) {
                     credentials = LoginEncryption(
-                         Hash(body.newPassword),
+                         Hash(user?.password||''),
                          user?.email || '',
                          user?._id,
                          Number(process.env.CLIENT_CREDENTIAL_EXPIRATION),
