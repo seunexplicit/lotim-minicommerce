@@ -326,7 +326,6 @@ export default class UserValidator {
                     }),
                newPassword: joi.string()
                     .min(6)
-                    .required()
                     .messages({
                          'string.min': `minimum new password value allowed {6}`,
                          'string.empty': `new password cannot be empty`,
