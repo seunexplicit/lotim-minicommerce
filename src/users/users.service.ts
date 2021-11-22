@@ -81,6 +81,7 @@ export class UserService {
 
                if (body.newPassword) body['password'] = Hash(body.newPassword);
                await user.updateOne({ ...body })
+		await user.save()
                let credentials;
                if (body.email || body.newPassword) {
                     credentials = LoginEncryption(
