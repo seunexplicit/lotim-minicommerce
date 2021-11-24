@@ -72,6 +72,12 @@ export class UsersRoute extends CommonRoute {
                     this.middleware.authenticate,
                     this.schema.orderValidator,
                     this.service.postOrders)
+               .patch('/order/status/:orderId',
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.schema.OrderStatus,
+                    this.service.changeOrderStatus
+               )
                .get('/order/:orderId',
                     this.middleware.authorized,
                     this.middleware.authenticate,

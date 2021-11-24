@@ -363,4 +363,25 @@ export default class UserValidator {
           next();
      }
 
+     OrderStatus(req: express.Request, res: express.Response, next: express.NextFunction){
+          const schema = joi.object({
+               status:joi.string()
+               .valid(["cancel", "completed"])
+               .required()
+               .messages({
+                    'string.valid': 'Allowed status are cancel and completed',
+                    'string.required': 'status is required',
+                    "string.base":"must be a string"
+               })
+          })
+
+          const validator = schema.validate(req.body);
+          if (validator.error) {
+               return res.status(400).send({ status: false, message: validator.error?.details[0]?.message })
+          }
+
+          next();
+
+     }
+
 }
