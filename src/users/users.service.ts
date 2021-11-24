@@ -16,7 +16,7 @@ import {
 import Hash from '../lib/hash_password';
 import LoginEncryption from '../lib/login';
 import { NextFunction, Request, Response } from 'express';
-import { MailService } from '../common/common.service';
+import { MailService, productResetByCancelOrder } from '../common/common.service';
 import { VerifyPTransaction } from '../lib/paystack';
 import { ProductsModel } from '../products/products.model';
 
@@ -73,20 +73,20 @@ export class UserService {
      async updateUser(req: Request, res: Response, next: NextFunction) {
           try {
                const { body, credentialId } = req;
-               const user = await UsersModel.findOne({_id:credentialId})
+               let user = await UsersModel.findOne({_id:credentialId})
                     .select('+password')
                if (!user || user.password !== Hash(body.oldPassword || '')) {
                     return res.status(400).send({status:false, message:"Invalid data/password"})
                }
 
                if (body.newPassword) body['password'] = Hash(body.newPassword);
-               await user.updateOne({ ...body })
-		await user.save()
+               await user.updateOne({ ...body }, {new:true})
+		     await user.save()
                let credentials;
                if (body.email || body.newPassword) {
                     credentials = LoginEncryption(
-                         Hash(user?.password||''),
-                         user?.email || '',
+                         body.newPassword?Hash(body.newPassword):user?.password||'',
+                         body.email?body.email:user?.email || '',
                          user?._id,
                          Number(process.env.CLIENT_CREDENTIAL_EXPIRATION),
                          process.env.CLIENT_API_KEY || ''
@@ -262,6 +262,33 @@ export class UserService {
           }
           catch (err) {
                next(err);
+          }
+     }
+
+     async changeOrderStatus(req: Request, res: Response, next: NextFunction){
+          try{
+               const { body, params } = req; 
+               const order = await OrdersModel.findOne({_id:params.orderId});
+               if(!order){
+                    return res.status(400).send({message:"Invalid order Id", status:false})
+               }
+
+               if(
+                    (["completed", "closed", "delivery", "rejected", "cancel"].includes(body.status)&&body.status=="cancel")||
+                    (["closed", "completed", "rejecetd", "cancel"].includes(body.status)&&body.status=="completed")
+                    ){
+                    return res.status(409).send({message:"Invalid operation", status:false})
+               }
+               if(body.status==="cancel"){
+                    productResetByCancelOrder(order, body)
+               }
+
+               order.status = body.status;
+               await order.save();
+               res.status(200).send({status:true, message:"status updated successfully", data:order})
+          }
+          catch(err){
+               next(err)
           }
      }
 

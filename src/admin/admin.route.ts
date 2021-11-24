@@ -79,6 +79,12 @@ export class AdminRoute extends CommonRoute {
                     this.middleware.authorized,
                     this.middleware.authenticate,
                     this.service.getOrders)
+               .patch('/order/status/:orderId', 
+                    this.middleware.authorized,
+                    this.middleware.authenticate,
+                    this.schema.orderUpdate,
+                    this.service.changeOrderStatus
+               )
                .delete('/order/:id',
                     this.middleware.authorized,
                     this.middleware.authenticate,

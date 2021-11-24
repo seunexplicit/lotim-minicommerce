@@ -86,13 +86,13 @@ export interface IOrder {
      orders: OrderProduct[],
      totalPurchasedPrice: number,
      fraudulent: boolean,
-     status: 'open' | 'delivery' | 'closed' | 'rejected' | 'cancel',
+     status: 'open' | 'delivery' | 'closed' | 'rejected' | 'cancel' | 'completed',
      user: string,
      payment: string
 }
 
 export interface Orders extends IOrder, Document {
-     remarks: string,
+     remarks:  string[],
      closedAt: Date,
      receivedAt: Date,
      deliveryCommencedAt: Date,
@@ -101,7 +101,12 @@ export interface Orders extends IOrder, Document {
 
 const OrdersSchema = new Schema<Orders>({
      payment: { type: Schema.Types.ObjectId, ref: 'Payment' },
-     remarks: String,
+     remarks: [
+          { 
+               remark:String,
+               updatedAt:Date 
+          }
+     ],
      closedAt: Date,
      deliveryCommencedAt: Date,
      totalPurchasedPrice: Number,
@@ -112,7 +117,7 @@ const OrdersSchema = new Schema<Orders>({
      paymentReference: String,
      paid: Boolean,
      status: {
-          type: String, enum: ['open', 'delivery', 'closed', 'completed', 'cancelled'], default:'open'
+          type: String, enum: ['open', 'delivery', 'closed', 'rejected', 'completed', 'cancel'], default:'open'
      },
      _delete: { type: Boolean, default: false, select:false },
      user: { type: Schema.Types.ObjectId, ref: 'Users' },

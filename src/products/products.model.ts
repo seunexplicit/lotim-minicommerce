@@ -60,7 +60,7 @@ const ProductsSchema = new Schema<Products>({
           cost: Number,
           price: Number,
           discount: Number,
-          totalPurchasedPrice:Number,
+          totalPurchasedPrice:{ type:Number, default:0},
           completedOrder: { type: Number, default: 0 },
           canceledOrder: { type: Number, default: 0 },
           rejectedOrder: { type: Number, default: 0 },

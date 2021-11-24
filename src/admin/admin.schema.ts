@@ -127,4 +127,35 @@ export default class UserValidator {
           }
           next();
      }
+     orderUpdate(req: express.Request, res: express.Response, next: express.NextFunction){
+          const schema  = joi.object({
+               fraudulent:joi.boolean()
+                    .messages({
+                         'boolean.base':"fradulent must be a string",
+                         'boolean.empty':"fradulent can not be emapty"
+                    }),
+               remarks:joi.array().items(
+                    joi.object({
+                         udatedAt:joi.date()
+                                   .required(),
+                         remark:joi.string()
+                              .required()
+                              .messages({
+                                   'string.empty':"remark cannot be an empty string"
+                              })
+                    })
+                    
+                    )
+                    .min(1),
+               status:joi.string()
+                    .valid(['delivery', 'closed', 'completed', 'cancel', 'rejected'])
+                
+          });
+
+          const validationResult = schema.validate(req.body);
+          if (validationResult.error) {
+               return res.status(400).send({ status: false, message: validationResult.error?.details[0]?.message })
+          }
+          next();
+     }
 }

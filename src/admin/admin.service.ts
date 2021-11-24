@@ -1,12 +1,12 @@
 import Hash from '../lib/hash_password';
 import { NextFunction, Request, Response } from "express";
-import { IProducts, ProductsModel } from "../products/products.model";
+import { IProducts, ProductsModel, Variety } from "../products/products.model";
 import { RandomValue } from '../lib/utility.lib';
-import { MailService } from '../common/common.service';
+import { MailService, productResetByCancelOrder } from '../common/common.service';
 import { AdminModel } from './admin.model';
 import Login from '../lib/login';
-import { AppointmentModel, EnquiryModel, OrdersModel, PaymentModel, UsersModel } from '../users/users.model';
-import { Mongoose, SchemaType, SchemaTypes, Types } from 'mongoose';
+import { AppointmentModel, EnquiryModel, OrderProduct, OrdersModel, PaymentModel, UsersModel } from '../users/users.model';
+import { Document } from 'mongoose';
 
 export class AdminService {
 
@@ -116,6 +116,29 @@ export class AdminService {
           }
           catch (err) {
                next(err);
+          }
+     }
+
+     async changeOrderStatus(req: Request, res: Response, next: NextFunction){
+          try{
+               const { body, params } = req;
+               //if(body)
+               const order = await OrdersModel.findOne({_id:params.orderId})
+               if(!order){
+                    return res.status(400).send({message:"Order not found", status:false})
+               }
+               if(!order.fraudulent&&!body.fraudulent){
+                    return res.status(400).send({message:"The order can't be processed", status:false})
+               }
+               if(body.status){
+                    productResetByCancelOrder(order, body);
+               }
+               await order.updateOne({...body}, {new:true})
+               await order.save()
+               res.status(200).send({message:"status updated successfully", status:true, data:order})
+          }
+          catch(err){
+               next(err)
           }
      }
 

@@ -1,4 +1,7 @@
+
 import mailgun from 'mailgun-js';
+import { ProductsModel } from 'src/products/products.model';
+import { OrderProduct, Orders } from 'src/users/users.model';
 import util from 'util';
 import { FileModel, File } from './common.model';
 
@@ -37,5 +40,45 @@ export class MailService {
 }
 
 
+export const productResetByCancelOrder = async (order:Orders, body:any)=>{
+     try{
+          const products = await ProductsModel.find({
+               _id: {
+                    $in: [...(order.orders?.map((value: OrderProduct) => value.product))]
+               }
+          });
 
-//export class
+          products.forEach((product, productIndex)=>{
+               const productOrder = order.orders?.find(each=>each.product==product._id)
+               product.varieties?.forEach((variety, varietyIndex)=>{
+                    if((variety as any)?._id===productOrder?.variety){
+                         if(body.staus==='cancel') products[productIndex].varieties[varietyIndex].canceledOrder++
+                         else if(body.staus==='rejected') products[productIndex].varieties[varietyIndex].rejectedOrder++
+                         else if(body.staus==='completed') products[productIndex].varieties[varietyIndex].completedOrder++
+
+                         if(body.status==='cancel'||body.status==='rejected'){
+                              if(variety.discount){
+                                   const discount = products[productIndex].varieties[varietyIndex].discount!
+                                   if(discount>productOrder!.quantity){
+                                        (products[productIndex].varieties[varietyIndex].discount as number)-= productOrder!.quantity
+                                   }
+                                   else{
+                                        (products[productIndex].varieties[varietyIndex].discount as number)=0;
+                                        (products[productIndex].varieties[varietyIndex].quantity as number)+=(productOrder!.quantity - Math.abs(discount))
+                                   }
+                                   
+                              } else (products[productIndex].varieties[varietyIndex].quantity as number)+=productOrder!.quantity
+                              
+                              if(order.paid){
+                                   products[productIndex].varieties[varietyIndex].totalPurchasedPrice-=productOrder!.price
+                              }
+                         }
+                    }
+               })
+               products[productIndex].save()
+          })
+     }
+     catch(err:any){
+          throw new err
+     }
+}

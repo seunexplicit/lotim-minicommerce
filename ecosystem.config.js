@@ -4,6 +4,7 @@ module.exports = {
           script: "src/index.ts",
           /*script:"./node_modules/.bin/ts-node -r ./node_modules/tsconfig-paths/register src/index.ts",*/
           watch: ['src'],
+          watch_delay: 3000,
           ignore_watch: ['src/public'],
           interpreter: 'node',
           interpreter_args: '--require ./node_modules/ts-node/register --require .//node_modules/tsconfig-paths/register',

@@ -1,3 +1,5 @@
+import { OrderProduct } from "src/users/users.model";
+
 export const RandomValue = (type: 'number' | 'alphabet' | 'alphanumeric', length: number) => {
      let [lower, upper] = [48, 57];
      if (type == 'alphabet') [lower, upper] = [65, 90];
@@ -13,4 +15,10 @@ export const RandomValue = (type: 'number' | 'alphabet' | 'alphanumeric', length
      }
 
      return randomValue;
+}
+
+export const calculateTotalPrice = (order:OrderProduct)=>{    
+     const cost = order.discount ? Number(order.price) - (Number(order.discount) * Number(order.price)) : Number(order.price)
+     return { cost, totalCost:cost*order.quantity }
+     
 }

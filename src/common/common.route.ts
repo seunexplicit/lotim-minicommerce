@@ -204,7 +204,7 @@ export abstract class CommonRoute {
 
      async getFilesCloudinary(authMiddleware?: RequestHandler) {
           try {
-               this.app.post('/fileCloudinary/:fileId',
+               this.app.get('/fileCloudinary/:fileId',
                     this.middleware.authorized,
                     authMiddleware || this.middleware.authenticate,
                     async (req: Request, res: Response, next: NextFunction) => {
