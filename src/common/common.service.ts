@@ -1,7 +1,7 @@
 
 import mailgun from 'mailgun-js';
-import { ProductsModel } from 'src/products/products.model';
-import { OrderProduct, Orders } from 'src/users/users.model';
+import { ProductsModel } from '../products/products.model';
+import { OrderProduct, Orders } from '../users/users.model';
 import util from 'util';
 import { FileModel, File } from './common.model';
 
