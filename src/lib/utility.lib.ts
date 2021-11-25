@@ -1,4 +1,4 @@
-import { OrderProduct } from "src/users/users.model";
+import { OrderProduct } from "../users/users.model";
 
 export const RandomValue = (type: 'number' | 'alphabet' | 'alphanumeric', length: number) => {
      let [lower, upper] = [48, 57];

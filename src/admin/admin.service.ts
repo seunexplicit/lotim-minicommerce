@@ -19,7 +19,6 @@ export class AdminService {
      async loginAdmin(req: Request, res: Response, next: NextFunction) {
           try {
                const { body } = req;
-               console.log("-------------------------")
                if (body.email === process.env.ADMIN_EMAIL && Hash(body.password) === process.env.ADMIN_PASSWORD) {
                     const randomValue = RandomValue('number', 6);
                     let admin = await AdminModel.findOne({ email: body.email });
